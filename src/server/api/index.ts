@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { health } from "./routes/health";
+import { foods } from "./routes/foods";
 import { sessionMiddleware } from "./middleware/auth";
 
 const app = new Hono().basePath("/api/v1");
@@ -18,6 +19,9 @@ app.use("*", sessionMiddleware);
 
 // Health check — no auth required
 app.route("/", health);
+
+// Food database
+app.route("/foods", foods);
 
 // 404 fallback
 app.notFound((c) => {
