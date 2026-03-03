@@ -2,7 +2,7 @@ cycle: 1
 phase: review
 max_cycles: 3
 current_lane: 1
-lane_attempt: 3
+lane_attempt: 4
 max_lane_attempts: 10
 spec_path: ''
 lanes_file: .forge/lanes.yaml
