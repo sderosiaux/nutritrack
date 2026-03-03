@@ -38,7 +38,7 @@
   lane: 1
   status: "DONE"
   test: "src/__tests__/chk004-auth.test.ts:85"
-  commit: "TBD"
+  commit: "9dd81ef"
 
 - id: "CHK-005"
   description: "Design system: Tailwind theme with spec tokens (Primary #16A34A, Accent #F59E0B, macro colors: Protein #3B82F6 / Carbs #A855F7 / Fat #EF4444 / Fiber #10B981), Inter variable font, 4px spacing grid, border-radii (sm:6px md:12px lg:16px xl:24px full:9999px), shadcn/ui base components (Button, Input, Card, Dialog, Sheet, Toast). NO traffic-light food classification."
