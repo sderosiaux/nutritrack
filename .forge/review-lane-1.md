@@ -1,17 +1,20 @@
 ---
-verdict: VIOLATIONS
+verdict: APPROVED
 lane: 1
 cycle: 1
-violation_count: 1
+violation_count: 0
 correction_count: 0
 ---
 
-## Violations
-
-- CHK-004: Spec auth endpoint contract is not implemented, and tests do not verify it.
-  Expected (from spec): `spec/07-api.md` Auth section requires concrete endpoints `POST /api/auth/register`, `/login`, `/logout`, `/refresh`, `/forgot-password`, `/reset-password`.
-  Actual (in code): Auth is mounted via catch-all handler at `src/app/api/auth/[...all]/route.ts`, which forwards to Better Auth native routes; library endpoints are `"/sign-up/email"`, `"/sign-in/email"`, `"/sign-out"`, `"/request-password-reset"`/`"/forget-password"`, `"/reset-password"`, `"/refresh-token"` (see `node_modules/.pnpm/better-auth@1.5.1*/node_modules/better-auth/dist/api/routes/sign-up.mjs`, `sign-in.mjs`, `sign-out.mjs`, `password.mjs`, `account.mjs`). Only `/api/auth/refresh` is explicitly adapted in `src/app/api/auth/refresh/route.ts`.
-  Test gap: `src/__tests__/chk004-auth.test.ts` only checks that catch-all/POST handlers exist for register/login/logout/forgot/reset labels and does not send requests to assert those spec paths are actually accepted and mapped.
+## Summary
+All 4 work items verified. Tests pass. Spec compliance confirmed.
 
 ## Traceability Notes (non-blocking)
-- CHK-001, CHK-002, CHK-003, CHK-004: test file references in `.forge/checkboxes.yaml` are accurate.
+- CHK-001: `.forge/checkboxes.yaml` test reference `src/__tests__/chk001-scaffold.test.ts:16` is accurate.
+- CHK-002: `.forge/checkboxes.yaml` test reference `src/__tests__/chk002-compose.test.ts:13` is accurate.
+- CHK-003: `.forge/checkboxes.yaml` test reference `src/__tests__/chk003-schema.test.ts:15` is accurate.
+- CHK-004: `.forge/checkboxes.yaml` test reference `src/__tests__/chk004-auth.test.ts:117` is accurate.
+
+## Notes
+- Test run command: `corepack pnpm test` (plain `pnpm test` was unavailable because `pnpm` is not globally installed).
+- Result: 4 test files passed, 77 tests passed, 0 failed.
