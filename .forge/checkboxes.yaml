@@ -47,7 +47,7 @@
   lane: 2
   status: "DONE"
   test: "src/__tests__/chk005-design-system.test.tsx:28"
-  commit: "d5ac5a5"
+  commit: "34cccb6"
 
 - id: "CHK-006"
   description: "App shell: responsive layout — bottom tab bar 5 items (mobile), collapsible left sidebar (tablet/desktop), global FAB '+' button, routing structure, layout breakpoints (mobile <640px / tablet 640-1024px / desktop >1024px)"
@@ -56,7 +56,7 @@
   lane: 2
   status: "DONE"
   test: "src/__tests__/chk006-app-shell.test.tsx:28"
-  commit: "d5ac5a5"
+  commit: "34cccb6"
 
 - id: "CHK-007"
   description: "Auth screens: Landing/Welcome (S-AUTH-1) with 'Get Started', 'Sign In', 'Continue as Guest' options; Login (S-AUTH-4) with email/password + forgot password; account creation form"
@@ -83,7 +83,7 @@
   lane: 2
   status: "DONE"
   test: "src/__tests__/chk053-guest-mode.test.tsx:25"
-  commit: "d5ac5a5"
+  commit: "34cccb6"
 
 # ── M1: Core Log Loop ──────────────────────────────────────────
 
