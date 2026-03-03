@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { upgradeGuestAccount } from "@/lib/guest/upgrade";
 
 const registerSchema = z.object({
   email: z.string().email("Invalid email"),
@@ -32,6 +33,11 @@ export default function RegisterPage() {
       body: JSON.stringify({ email: data.email, password: data.password }),
     });
     if (res.ok) {
+      const body = await res.json().catch(() => null);
+      const userId: string | undefined = body?.user?.id;
+      if (userId) {
+        await upgradeGuestAccount(userId);
+      }
       window.location.href = "/onboarding";
     }
   }

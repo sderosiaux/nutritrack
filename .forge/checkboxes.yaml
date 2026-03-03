@@ -46,7 +46,7 @@
   milestone: "M0"
   lane: 2
   status: "DONE"
-  test: "src/__tests__/chk005-design-system.test.tsx:16"
+  test: "src/__tests__/chk005-design-system.test.tsx:28"
   commit: "d5ac5a5"
 
 - id: "CHK-006"
@@ -55,7 +55,7 @@
   milestone: "M0"
   lane: 2
   status: "DONE"
-  test: "src/__tests__/chk006-app-shell.test.tsx:25"
+  test: "src/__tests__/chk006-app-shell.test.tsx:28"
   commit: "d5ac5a5"
 
 - id: "CHK-007"
@@ -82,7 +82,7 @@
   milestone: "M0"
   lane: 2
   status: "DONE"
-  test: "src/__tests__/chk053-guest-mode.test.tsx:32"
+  test: "src/__tests__/chk053-guest-mode.test.tsx:25"
   commit: "d5ac5a5"
 
 # ── M1: Core Log Loop ──────────────────────────────────────────

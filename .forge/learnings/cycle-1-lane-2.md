@@ -47,3 +47,17 @@
 - Guest migration (`src/lib/guest/migration.ts`) uses raw `fetch()` without auth headers. When called post-registration, the session cookie should be set. This needs to be verified in lane 12 (pwa-offline) where full migration flow is implemented.
 
 - Stub page components (`/today`, `/journal`, etc.) will be replaced in lanes 5-9. They exist now only to verify routing works end-to-end.
+
+## RETRY FIXES (attempt 2)
+
+- **Breakpoint bug**: Original code used `md:` (768px) instead of spec's `sm:` (640px). Tailwind `md` = 768px but spec says tablet starts at 640px. Fix: `hidden sm:flex` for sidebar, `sm:hidden` for bottom-nav. (`sidebar.tsx:33`, `bottom-nav.tsx:22`)
+
+- **FAB orphaned**: FAB component existed but was never rendered in `app/(app)/layout.tsx`. Always verify integration from production entry point, not just component tests. (`layout.tsx:6`)
+
+- **Migration HTTP status bug**: `fetch()` non-2xx responses were silently counted as migrated. Fix: check `res.ok` before incrementing `migrated`. Reviewer caught this as a silent data-loss vector. (`migration.ts:35-41`)
+
+- **`vi.stubGlobal` return value**: Returns `vi` instance, NOT the spy. Always save the mock reference before passing: `const mock = vi.fn(); vi.stubGlobal("fetch", mock); expect(mock).not...`
+
+- **Shared Dexie DB across tests**: `new NutriDB()` always opens the same "NutriTrack" database in fake-indexeddb. Entries accumulate across tests in the same run. Fix: call `db.mealEntries.clear()` etc. at test start, or use unique DB names per test suite.
+
+- **Multiple aria-label "Main navigation"**: Both Sidebar `<nav>` and BottomNav `<nav>` share the same aria-label. When testing AppLayout (which renders both), `getByLabelText("Main navigation")` throws "multiple elements found". Fix: use `getAllByLabelText` and assert count, or use the unique `<aside aria-label="Sidebar navigation">` for the sidebar.

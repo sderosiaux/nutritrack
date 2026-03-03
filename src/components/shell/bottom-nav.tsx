@@ -19,7 +19,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Main navigation"
-      className="fixed bottom-0 left-0 right-0 z-40 flex h-16 items-center border-t border-[var(--color-border)] bg-[var(--color-surface)] md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-40 flex h-16 items-center border-t border-[var(--color-border)] bg-[var(--color-surface)] sm:hidden"
     >
       {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
         const active = pathname === href || pathname.startsWith(href + "/");

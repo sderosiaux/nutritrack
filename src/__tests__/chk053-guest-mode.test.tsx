@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 // Install fake IndexedDB before importing Dexie
@@ -9,6 +9,7 @@ import { NutriDB } from "@/lib/db/offline";
 import { useGuestStore } from "@/lib/stores/guest-store";
 import { BackupBanner } from "@/components/guest/backup-banner";
 import { migrateGuestData } from "@/lib/guest/migration";
+import { upgradeGuestAccount } from "@/lib/guest/upgrade";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
@@ -151,16 +152,96 @@ describe("CHK-053: BackupBanner component", () => {
   });
 });
 
-describe("CHK-053: Guest data migration", () => {
-  it("migrateGuestData is a function", () => {
-    expect(typeof migrateGuestData).toBe("function");
+describe("CHK-053: Guest data migration — HTTP status handling", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
-  it("migrateGuestData returns a Promise", () => {
+  it("migrateGuestData counts 2xx responses as migrated", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true }));
     const db = new NutriDB();
-    const result = migrateGuestData(db, "user-123");
-    expect(result).toBeInstanceOf(Promise);
-    // Don't await — just check it's thenable
-    result.catch(() => {}); // suppress unhandled rejection
+    // Clear all tables to isolate from other test entries
+    await db.mealEntries.clear();
+    await db.waterEntries.clear();
+    await db.weightEntries.clear();
+    await db.mealEntries.add({
+      date: "2026-03-03",
+      foodId: "food-migrate-1",
+      name: "Rice",
+      kcal: 200,
+      protein: 4,
+      carbs: 44,
+      fat: 0.4,
+      fiber: 0.6,
+      grams: 100,
+      mealType: "lunch",
+      createdAt: Date.now(),
+    });
+    const result = await migrateGuestData(db, "user-abc");
+    expect(result.migrated).toBe(1);
+    expect(result.errors).toBe(0);
+  });
+
+  it("migrateGuestData counts non-2xx responses as errors, not migrations", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 422 }));
+    const db = new NutriDB();
+    await db.mealEntries.add({
+      date: "2026-03-03",
+      foodId: "food-migrate-2",
+      name: "Oats",
+      kcal: 150,
+      protein: 5,
+      carbs: 27,
+      fat: 3,
+      fiber: 4,
+      grams: 50,
+      mealType: "breakfast",
+      createdAt: Date.now(),
+    });
+    const result = await migrateGuestData(db, "user-abc");
+    expect(result.errors).toBe(1);
+    expect(result.migrated).toBe(0);
+  });
+
+  it("migrateGuestData does NOT clear IndexedDB when errors > 0", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 500 }));
+    const db = new NutriDB();
+    await db.waterEntries.add({ date: "2026-03-03", ml: 500, createdAt: Date.now() });
+    await migrateGuestData(db, "user-abc");
+    // Local data must be preserved when server rejected the upload
+    const remaining = await db.waterEntries.toArray();
+    expect(remaining.length).toBeGreaterThan(0);
+  });
+});
+
+describe("CHK-053: Guest upgrade flow (guest-to-account migration)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    useGuestStore.setState({ isGuest: false });
+  });
+
+  it("upgradeGuestAccount is a no-op when user is not a guest", async () => {
+    useGuestStore.setState({ isGuest: false });
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await upgradeGuestAccount("user-xyz");
+    expect(result.migrated).toBe(0);
+    expect(result.errors).toBe(0);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("upgradeGuestAccount clears guest flag after migration", async () => {
+    useGuestStore.setState({ isGuest: true });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true }));
+    await upgradeGuestAccount("user-registered-1");
+    expect(useGuestStore.getState().isGuest).toBe(false);
+  });
+
+  it("upgradeGuestAccount clears guest flag even when migration has errors", async () => {
+    // User should not be stuck in guest mode after registration, even on partial failure
+    useGuestStore.setState({ isGuest: true });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 500 }));
+    await upgradeGuestAccount("user-registered-2");
+    expect(useGuestStore.getState().isGuest).toBe(false);
   });
 });

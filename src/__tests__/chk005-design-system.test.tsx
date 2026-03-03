@@ -6,6 +6,19 @@ import { render, screen } from "@testing-library/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import { Toaster } from "@/components/ui/sonner";
 
 const css = readFileSync(
   join(process.cwd(), "src/app/globals.css"),
@@ -53,6 +66,16 @@ describe("CHK-005: Design System Tokens", () => {
 
   it("defines overflow rose color for calorie ring overflow state", () => {
     expect(css).toContain("--color-rose: #f43f5e");
+  });
+
+  it("does NOT define traffic-light food classification tokens", () => {
+    // Spec: NO traffic-light food classification (spec/06-ux-design.md)
+    expect(css).not.toContain("--color-food-green");
+    expect(css).not.toContain("--color-food-amber");
+    expect(css).not.toContain("--color-food-red");
+    expect(css).not.toContain("--color-food-healthy");
+    expect(css).not.toContain("--color-food-unhealthy");
+    expect(css).not.toContain("traffic-light");
   });
 });
 
@@ -104,5 +127,73 @@ describe("CHK-005: shadcn/ui Card component", () => {
     );
     expect(screen.getByText("Breakfast")).toBeDefined();
     expect(screen.getByText("520 kcal")).toBeDefined();
+  });
+});
+
+describe("CHK-005: shadcn/ui Dialog component", () => {
+  it("renders Dialog with title and description when open", () => {
+    render(
+      <Dialog open={true}>
+        <DialogContent>
+          <DialogTitle>Confirm deletion</DialogTitle>
+          <DialogDescription>This action cannot be undone.</DialogDescription>
+        </DialogContent>
+      </Dialog>
+    );
+    expect(screen.getByRole("dialog")).toBeDefined();
+    expect(screen.getByText("Confirm deletion")).toBeDefined();
+    expect(screen.getByText("This action cannot be undone.")).toBeDefined();
+  });
+
+  it("does not render dialog content when closed", () => {
+    render(
+      <Dialog open={false}>
+        <DialogContent>
+          <DialogTitle>Hidden title</DialogTitle>
+        </DialogContent>
+      </Dialog>
+    );
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+});
+
+describe("CHK-005: shadcn/ui Sheet component", () => {
+  it("renders Sheet with bottom side for mobile log entry", () => {
+    render(
+      <Sheet open={true}>
+        <SheetContent side="bottom">
+          <SheetTitle>Log food</SheetTitle>
+          <SheetDescription>Select a logging method</SheetDescription>
+        </SheetContent>
+      </Sheet>
+    );
+    expect(screen.getByText("Log food")).toBeDefined();
+    expect(screen.getByText("Select a logging method")).toBeDefined();
+  });
+
+  it("renders Sheet with right side for tablet/desktop side panel", () => {
+    render(
+      <Sheet open={true}>
+        <SheetContent side="right">
+          <SheetTitle>Food search</SheetTitle>
+        </SheetContent>
+      </Sheet>
+    );
+    expect(screen.getByText("Food search")).toBeDefined();
+  });
+});
+
+describe("CHK-005: shadcn/ui Toast (Sonner) component", () => {
+  it("renders Toaster without errors", () => {
+    const { container } = render(<Toaster />);
+    expect(container).toBeDefined();
+  });
+
+  it("Toaster configured with bottom-center position per UX spec", () => {
+    const src = readFileSync(
+      join(process.cwd(), "src/components/ui/sonner.tsx"),
+      "utf-8"
+    );
+    expect(src).toContain("bottom-center");
   });
 });

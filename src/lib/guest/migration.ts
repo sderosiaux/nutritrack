@@ -2,7 +2,8 @@ import type { NutriDB } from "@/lib/db/offline";
 
 /**
  * migrateGuestData — copies all local IndexedDB data to the server for userId.
- * Called after guest-to-account upgrade. Clears IndexedDB after successful sync.
+ * Called after guest-to-account upgrade. Clears IndexedDB only when errors === 0.
+ * Non-2xx HTTP responses are counted as errors to prevent silent data loss.
  */
 export async function migrateGuestData(
   db: NutriDB,
@@ -32,18 +33,22 @@ export async function migrateGuestData(
           ? `/api/v1/logs/${item.data.date}/water`
           : `/api/v1/logs/${item.data.date}/weight`;
 
-      await fetch(endpoint, {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...item.data, userId }),
       });
-      migrated++;
+      if (res.ok) {
+        migrated++;
+      } else {
+        errors++;
+      }
     } catch {
       errors++;
     }
   }
 
-  // Clear local store after migration
+  // Clear local store only when all entries migrated successfully
   if (errors === 0) {
     await Promise.all([
       db.mealEntries.clear(),

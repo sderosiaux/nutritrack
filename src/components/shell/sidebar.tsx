@@ -30,7 +30,7 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "hidden md:flex flex-col h-full border-r border-[var(--color-border)] bg-[var(--color-surface)] transition-all duration-200",
+        "hidden sm:flex flex-col h-full border-r border-[var(--color-border)] bg-[var(--color-surface)] transition-all duration-200",
         sidebarOpen ? "w-56" : "w-16"
       )}
       aria-label="Sidebar navigation"
