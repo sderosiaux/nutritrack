@@ -44,9 +44,9 @@ describe("CHK-008: Food DB seeding", () => {
     expect(Array.isArray(SEED_FOODS)).toBe(true);
   });
 
-  it("seed data has >= 500 food items (curated starter set)", async () => {
+  it("seed data has >= 10000 food items (curated starter set)", async () => {
     const { SEED_FOODS } = await import("@/server/db/seed-data/foods");
-    expect(SEED_FOODS.length).toBeGreaterThanOrEqual(500);
+    expect(SEED_FOODS.length).toBeGreaterThanOrEqual(10000);
   });
 
   it("each food item has required nutrition fields", async () => {

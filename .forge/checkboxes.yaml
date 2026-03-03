@@ -102,7 +102,7 @@
   milestone: "M1"
   lane: 3
   status: "DONE"
-  test: "src/__tests__/chk009-food-search.test.ts:47"
+  test: "src/__tests__/chk009-rank.test.ts:35"
   commit: "172a426"
 
 - id: "CHK-010"

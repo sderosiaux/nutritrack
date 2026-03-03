@@ -1,0 +1,216 @@
+/**
+ * Extended USDA food data — Part A: proteins, dairy, eggs, vegetables, nuts, herbs, oils.
+ * ~300 additional base foods to supplement the core 100-item set in foods.ts.
+ * Used by SEED_FOODS in foods.ts to reach ~10k total items (via variant expansion).
+ */
+import { mk, type SeedFood } from "./food-helpers";
+
+// Compact helpers: usda(id,name,cal,pro,carb,fat,fib,cat,ss2?)
+const u = (
+  id: string, name: string,
+  cal: number, pro: number, carb: number, fat: number, fib: number,
+  cat: string, ss2?: [string, number]
+): SeedFood => mk(id, name, "usda", cal, pro, carb, fat, fib,
+  ss2 ? [["100g", 100], ss2] : [["100g", 100]], { cat });
+
+// open_food_facts branded
+const o = (
+  id: string, name: string,
+  cal: number, pro: number, carb: number, fat: number, fib: number,
+  cat: string, brand: string, ss2?: [string, number], barcode?: string
+): SeedFood => mk(id, name, "open_food_facts", cal, pro, carb, fat, fib,
+  ss2 ? [["100g", 100], ss2] : [["100g", 100]], { cat, brand, barcode });
+
+export const EXTENDED_FOODS_A: SeedFood[] = [
+  // ── More Poultry & Game ──────────────────────────────────────────────────
+  u("usda-101","Duck Breast, raw",201,20,0,13,0,"meat",["1 breast (170g)",170]),
+  u("usda-102","Turkey Thigh, raw",145,18,0,8,0,"meat",["1 thigh (120g)",120]),
+  u("usda-103","Chicken Wings, raw",222,18,0,16,0,"meat",["3 wings (84g)",84]),
+  u("usda-104","Quail, whole",192,22,0,11,0,"meat",["1 quail (100g)",100]),
+  u("usda-105","Cornish Game Hen",182,21,0,11,0,"meat",["1/2 hen (100g)",100]),
+  u("usda-106","Ground Turkey, 93% lean",148,17,0,8,0,"meat",["3 oz (85g)",85]),
+  u("usda-107","Chicken Liver, raw",119,17,1,4.8,0,"meat",["1 serving (85g)",85]),
+
+  // ── More Beef & Lamb ────────────────────────────────────────────────────
+  u("usda-108","Beef Ribeye, raw",291,18,0,24,0,"meat",["4 oz (113g)",113]),
+  u("usda-109","Beef Sirloin, raw",178,21,0,10,0,"meat",["4 oz (113g)",113]),
+  u("usda-110","Beef Tenderloin, raw",219,20,0,15,0,"meat",["4 oz (113g)",113]),
+  u("usda-111","Beef Brisket, raw",218,17,0,17,0,"meat",["4 oz (113g)",113]),
+  u("usda-112","Beef Chuck, raw",215,19,0,15,0,"meat",["4 oz (113g)",113]),
+  u("usda-113","Lamb Chop, raw",258,17,0,21,0,"meat",["1 chop (85g)",85]),
+  u("usda-114","Lamb Leg, raw",206,20,0,14,0,"meat",["4 oz (113g)",113]),
+  u("usda-115","Veal Cutlet, raw",175,20,0,10,0,"meat",["4 oz (113g)",113]),
+  u("usda-116","Pork Belly, raw",518,9,0,53,0,"meat",["4 oz (113g)",113]),
+  u("usda-117","Pork Sausage, raw",301,14,1,27,0,"meat",["1 link (67g)",67]),
+  u("usda-118","Venison, raw",158,26,0,5.2,0,"meat",["4 oz (113g)",113]),
+  u("usda-119","Bacon, cooked",541,37,1.4,42,0,"meat",["2 slices (16g)",16]),
+  u("usda-120","Ham, cured",145,17,2,8,0,"meat",["3 oz (85g)",85]),
+
+  // ── More Fish & Seafood ─────────────────────────────────────────────────
+  u("usda-121","Cod, raw",82,18,0,0.7,0,"fish",["1 fillet (180g)",180]),
+  u("usda-122","Tilapia, raw",96,20,0,1.7,0,"fish",["1 fillet (87g)",87]),
+  u("usda-123","Halibut, raw",91,19,0,1.3,0,"fish",["1 fillet (159g)",159]),
+  u("usda-124","Mahi-Mahi, raw",85,19,0,0.7,0,"fish",["1 fillet (204g)",204]),
+  u("usda-125","Sardines, canned in oil",208,25,0,11,0,"fish",["1 can (92g)",92]),
+  u("usda-126","Herring, raw",203,23,0,12,0,"fish",["1 fillet (143g)",143]),
+  u("usda-127","Trout, rainbow raw",119,20,0,3.5,0,"fish",["1 fillet (143g)",143]),
+  u("usda-128","Swordfish, raw",121,20,0,4,0,"fish",["1 piece (106g)",106]),
+  u("usda-129","Anchovies, canned",210,29,0,10,0,"fish",["2 tbsp (20g)",20]),
+  u("usda-130","Catfish, raw",95,16,0,3,0,"fish",["1 fillet (130g)",130]),
+  u("usda-131","Clams, raw",74,13,5,1,0,"seafood",["3 oz (85g)",85]),
+  u("usda-132","Oysters, raw",68,7,3.9,2.5,0,"seafood",["1 medium (14g)",14]),
+  u("usda-133","Scallops, raw",88,17,4,0.8,0,"seafood",["3 oz (85g)",85]),
+  u("usda-134","Crab, blue raw",87,18,0,1.1,0,"seafood",["3 oz (85g)",85]),
+  u("usda-135","Lobster, raw",89,19,1.2,0.9,0,"seafood",["3 oz (85g)",85]),
+  u("usda-136","Mussels, raw",86,12,3.7,2.2,0,"seafood",["3 oz (85g)",85]),
+
+  // ── More Dairy & Eggs ───────────────────────────────────────────────────
+  u("usda-137","Heavy Cream",345,2.8,2.8,37,0,"dairy",["1 tbsp (15g)",15]),
+  u("usda-138","Sour Cream",193,2.4,4.6,19,0,"dairy",["2 tbsp (30g)",30]),
+  u("usda-139","Cream Cheese",342,5.9,4.1,34,0,"dairy",["2 tbsp (29g)",29]),
+  u("usda-140","Ricotta Cheese, whole milk",174,11,3.8,13,0,"dairy",["1/4 cup (62g)",62]),
+  u("usda-141","Mozzarella, part-skim",254,25,2.8,16,0,"dairy",["1 oz (28g)",28]),
+  u("usda-142","Parmesan, grated",431,38,4,29,0,"dairy",["1 tbsp (5g)",5]),
+  u("usda-143","Feta Cheese",264,14,4,21,0,"dairy",["1 oz (28g)",28]),
+  u("usda-144","Gouda Cheese",356,25,2.2,28,0,"dairy",["1 oz (28g)",28]),
+  u("usda-145","Brie Cheese",334,21,0.5,28,0,"dairy",["1 oz (28g)",28]),
+  u("usda-146","Swiss Cheese",380,27,5.4,28,0,"dairy",["1 oz (28g)",28]),
+  u("usda-147","Provolone Cheese",352,26,2.1,27,0,"dairy",["1 oz (28g)",28]),
+  u("usda-148","Skim Milk",34,3.4,5,0.1,0,"dairy",["1 cup (245ml)",245]),
+  u("usda-149","2% Milk",50,3.3,4.7,2,0,"dairy",["1 cup (244ml)",244]),
+  u("usda-150","Kefir, plain",61,3.3,4.8,3.5,0,"dairy",["1 cup (240ml)",240]),
+  u("usda-151","Buttermilk, low-fat",40,3.3,4.8,0.9,0,"dairy",["1 cup (245ml)",245]),
+  u("usda-152","Egg Yolk, raw",322,16,3.6,27,0,"eggs",["1 yolk (17g)",17]),
+  u("usda-153","Hard-Boiled Egg",155,13,1.1,11,0,"eggs",["1 large (50g)",50]),
+  u("usda-154","Scrambled Eggs",149,10,1.6,11,0,"eggs",["1 cup (220g)",220]),
+
+  // ── More Vegetables ─────────────────────────────────────────────────────
+  u("usda-155","Artichoke, cooked",53,2.9,12,0.2,10,"vegetables",["1 medium (120g)",120]),
+  u("usda-156","Asparagus, raw",20,2.2,3.9,0.1,2.1,"vegetables",["5 spears (93g)",93]),
+  u("usda-157","Beets, raw",43,1.6,9.6,0.2,2.8,"vegetables",["1 cup (136g)",136]),
+  u("usda-158","Brussels Sprouts, raw",43,3.4,9,0.3,3.8,"vegetables",["1 cup (88g)",88]),
+  u("usda-159","Cabbage, raw",25,1.3,6,0.1,2.5,"vegetables",["1 cup (89g)",89]),
+  u("usda-160","Cauliflower, raw",25,1.9,5,0.3,2,"vegetables",["1 cup (107g)",107]),
+  u("usda-161","Celery, raw",16,0.7,3,0.2,1.6,"vegetables",["1 cup (101g)",101]),
+  u("usda-162","Corn, sweet raw",86,3.2,19,1.2,2.7,"vegetables",["1 ear (90g)",90]),
+  u("usda-163","Eggplant, raw",25,1,5.9,0.2,3,"vegetables",["1 cup (82g)",82]),
+  u("usda-164","Green Beans, raw",31,1.8,7,0.2,3.4,"vegetables",["1 cup (110g)",110]),
+  u("usda-165","Leeks, raw",61,1.5,14,0.3,1.8,"vegetables",["1 medium (89g)",89]),
+  u("usda-166","Romaine Lettuce",17,1.2,3.3,0.3,2.1,"vegetables",["1 cup (47g)",47]),
+  u("usda-167","Iceberg Lettuce",14,0.9,3,0.1,1.2,"vegetables",["1 cup (57g)",57]),
+  u("usda-168","Okra, raw",33,1.9,7.5,0.2,3.2,"vegetables",["1 cup (100g)",100]),
+  u("usda-169","Green Peas, raw",81,5.4,14,0.4,5.1,"vegetables",["1 cup (145g)",145]),
+  u("usda-170","Radish, raw",16,0.7,3.4,0.1,1.6,"vegetables",["1 cup (116g)",116]),
+  u("usda-171","Butternut Squash",45,1,12,0.1,2,"vegetables",["1 cup (140g)",140]),
+  u("usda-172","Zucchini, raw",17,1.2,3.1,0.3,1,"vegetables",["1 cup (124g)",124]),
+  u("usda-173","Acorn Squash",40,0.8,10,0.1,1.5,"vegetables",["1 cup (140g)",140]),
+  u("usda-174","Bok Choy, raw",13,1.5,2.2,0.2,1,"vegetables",["1 cup (70g)",70]),
+  u("usda-175","Snow Peas, raw",42,2.8,7.6,0.2,2.6,"vegetables",["1 cup (98g)",98]),
+  u("usda-176","Arugula, raw",25,2.6,3.7,0.7,1.6,"vegetables",["1 cup (20g)",20]),
+  u("usda-177","Swiss Chard, raw",19,1.8,3.7,0.2,1.6,"vegetables",["1 cup (36g)",36]),
+  u("usda-178","Parsnip, raw",75,1.2,18,0.3,4.9,"vegetables",["1 medium (133g)",133]),
+  u("usda-179","Fennel, raw",31,1.2,7.3,0.2,3.1,"vegetables",["1 cup (87g)",87]),
+  u("usda-180","Turnip, raw",28,0.9,6.4,0.1,1.8,"vegetables",["1 medium (122g)",122]),
+  u("usda-181","Rutabaga, raw",37,1.1,8.7,0.2,2.3,"vegetables",["1 cup cubed (140g)",140]),
+  u("usda-182","Kohlrabi, raw",27,1.7,6.2,0.1,3.6,"vegetables",["1 cup (135g)",135]),
+  u("usda-183","Watercress, raw",11,2.3,1.3,0.1,0.5,"vegetables",["1 cup (34g)",34]),
+  u("usda-184","Radicchio, raw",23,1.4,4.5,0.3,0.9,"vegetables",["1 cup (40g)",40]),
+  u("usda-185","Endive, raw",17,1.3,3.4,0.2,3.1,"vegetables",["1 cup (50g)",50]),
+
+  // ── More Nuts & Seeds ───────────────────────────────────────────────────
+  u("usda-186","Cashews",553,18,30,44,3.3,"nuts",["1 oz (28g)",28]),
+  u("usda-187","Macadamia Nuts",718,8,14,76,8.6,"nuts",["1 oz (28g)",28]),
+  u("usda-188","Pecans",691,9,14,72,9.6,"nuts",["1 oz (28g)",28]),
+  u("usda-189","Hazelnuts",628,15,17,61,9.7,"nuts",["1 oz (28g)",28]),
+  u("usda-190","Brazil Nuts",659,14,12,67,7.5,"nuts",["1 oz (28g)",28]),
+  u("usda-191","Pine Nuts",673,14,13,68,3.7,"nuts",["1 oz (28g)",28]),
+  u("usda-192","Pistachios",562,20,28,45,10.6,"nuts",["1 oz (28g)",28]),
+  u("usda-193","Pumpkin Seeds",559,30,11,49,6,"seeds",["1 oz (28g)",28]),
+  u("usda-194","Sesame Seeds",573,18,24,50,11.8,"seeds",["1 tbsp (9g)",9]),
+  u("usda-195","Hemp Seeds",553,32,9,49,4,"seeds",["3 tbsp (30g)",30]),
+  u("usda-196","Poppy Seeds",525,18,28,42,19.5,"seeds",["1 tbsp (9g)",9]),
+  u("usda-197","Tahini",595,17,21,54,9.3,"seeds",["2 tbsp (30g)",30]),
+
+  // ── Herbs & Spices ──────────────────────────────────────────────────────
+  u("usda-198","Basil, fresh",23,3.2,2.7,0.6,1.6,"herbs",["1/4 cup (6g)",6]),
+  u("usda-199","Cilantro, fresh",23,2.1,3.7,0.5,2.8,"herbs",["1/4 cup (4g)",4]),
+  u("usda-200","Parsley, fresh",36,3,6.3,0.8,3.3,"herbs",["1/4 cup (15g)",15]),
+  u("usda-201","Dill, fresh",43,3.5,7,1.1,2.1,"herbs",["1 tbsp (3.2g)",3]),
+  u("usda-202","Mint, fresh",44,3.3,8.4,0.7,6.8,"herbs",["2 tbsp (3.2g)",3]),
+  u("usda-203","Turmeric, ground",354,8,65,10,21,"spices",["1 tsp (3g)",3]),
+  u("usda-204","Ginger, ground",335,9,71,4.2,14,"spices",["1 tsp (1.8g)",2]),
+  u("usda-205","Cinnamon, ground",247,4,81,1.2,53,"spices",["1 tsp (2.6g)",3]),
+  u("usda-206","Paprika",282,14,54,13,35,"spices",["1 tsp (2.1g)",2]),
+  u("usda-207","Cumin, ground",375,18,44,22,10.5,"spices",["1 tsp (2.1g)",2]),
+  u("usda-208","Black Pepper, ground",251,10,64,3.3,26,"spices",["1 tsp (2.3g)",2]),
+  u("usda-209","Oregano, dried",265,9,69,4.3,43,"spices",["1 tsp (1g)",1]),
+
+  // ── Oils & Fats ─────────────────────────────────────────────────────────
+  u("usda-210","Avocado Oil",884,0,0,100,0,"oils",["1 tbsp (14g)",14]),
+  u("usda-211","Sesame Oil",884,0,0,100,0,"oils",["1 tbsp (13.6g)",14]),
+  u("usda-212","Walnut Oil",884,0,0,100,0,"oils",["1 tbsp (13.6g)",14]),
+  u("usda-213","Ghee",900,0,0,100,0,"dairy",["1 tbsp (13g)",13]),
+  u("usda-214","Sunflower Oil",884,0,0,100,0,"oils",["1 tbsp (14g)",14]),
+  u("usda-215","Canola Oil",884,0,0,100,0,"oils",["1 tbsp (14g)",14]),
+
+  // ── More Condiments & Sauces ────────────────────────────────────────────
+  u("usda-216","Mustard, yellow",60,4.4,6.8,3.4,3.2,"condiments",["1 tsp (5g)",5]),
+  u("usda-217","Soy Sauce, regular",53,8.1,5,0.1,0.8,"condiments",["1 tbsp (16g)",16]),
+  u("usda-218","Worcestershire Sauce",78,0,19,0.1,0,"condiments",["1 tbsp (17g)",17]),
+  u("usda-219","Hot Sauce",11,0.5,0.9,0.6,0.5,"condiments",["1 tsp (5g)",5]),
+  u("usda-220","Salsa, tomato",36,1.7,8,0.2,1.5,"condiments",["2 tbsp (29g)",29]),
+  u("usda-221","Guacamole",157,2,8.6,14,5.9,"condiments",["2 tbsp (30g)",30]),
+  u("usda-222","Tahini Sauce",469,17,26,40,5.2,"condiments",["2 tbsp (30g)",30]),
+  u("usda-223","Tzatziki",72,5,4.4,4.1,0.3,"condiments",["2 tbsp (30g)",30]),
+  u("usda-224","Ranch Dressing",147,1.4,6.6,13,0,"condiments",["2 tbsp (30g)",30]),
+  u("usda-225","Italian Dressing",135,0.4,5.2,12,0,"condiments",["2 tbsp (30g)",30]),
+  u("usda-226","Balsamic Vinegar",88,0.5,17,0,0,"condiments",["1 tbsp (16g)",16]),
+  u("usda-227","Apple Cider Vinegar",22,0,0.9,0,0,"condiments",["1 tbsp (15g)",15]),
+
+  // ── Extended Branded (Open Food Facts) ──────────────────────────────────
+  o("off-041","Snickers Bar",488,8.3,61,24,1.3,"chocolate","Mars","1 bar (52.7g)",53),
+  o("off-042","Twix Caramel Bar",498,5,64,24,0.8,"chocolate","Mars","2 bars (58g)",58),
+  o("off-043","M&M's Milk Chocolate",480,5,73,20,1,"chocolate","Mars","1 bag (42g)",42),
+  o("off-044","Kit Kat Original",518,7.4,63,25,2,"chocolate","Nestlé","2 bars (41g)",41),
+  o("off-045","Reese's Peanut Butter Cup",488,11,57,28,2,"chocolate","Hershey's","2 cups (45g)",45),
+  o("off-046","Doritos Nacho Cheese",486,7.5,57,25,3.4,"snacks","Frito-Lay","1 oz (28g)",28),
+  o("off-047","Ritz Crackers Original",481,7.6,65,22,2.1,"snacks","Nabisco","5 crackers (16g)",16),
+  o("off-048","Triscuit Original Crackers",410,9.4,68,9.4,6,"snacks","Nabisco","6 crackers (28g)",28),
+  o("off-049","Wheat Thins Original",414,8.3,64,13,5.2,"snacks","Nabisco","16 crackers (31g)",31),
+  o("off-050","Kellogg's Frosted Flakes",380,4.4,89,0.5,1,"cereals","Kellogg's","3/4 cup (31g)",31),
+  o("off-051","Raisin Bran Cereal",333,7.7,78,1.5,7.5,"cereals","Kellogg's","1 cup (59g)",59),
+  o("off-052","Grape Nuts Cereal",362,12,77,1.6,6.5,"cereals","Post","1/2 cup (58g)",58),
+  o("off-053","Nature's Own Honey Wheat Bread",267,10,49,3.3,4,"grains","Flowers Foods","1 slice (28g)",28),
+  o("off-054","Thomas' English Muffin",210,7,43,1.5,2,"grains","Bimbo","1 muffin (57g)",57),
+  o("off-055","Pepperidge Farm Goldfish Pretzel",381,8.3,75,3.8,2.6,"snacks","Pepperidge Farm","1 oz (28g)",28),
+  o("off-056","Stonyfield Organic Whole Milk Yogurt",61,4.4,4.7,3,0,"dairy","Stonyfield","1 container (170g)",170),
+  o("off-057","Siggi's Plain Skyr",63,11,4,0.5,0,"dairy","Siggi's","1 container (150g)",150),
+  o("off-058","Fage Total 0% Greek Yogurt",57,10,4,0,0,"dairy","Fage","1 container (170g)",170),
+  o("off-059","Good Culture Cottage Cheese",82,12,3.8,2,0,"dairy","Good Culture","1/2 cup (113g)",113),
+  o("off-060","Silk Soy Milk Unsweetened",33,3.3,1.6,2,0.4,"dairy-alt","Silk","1 cup (243ml)",243),
+
+  // ── Baked Goods & Breakfast ─────────────────────────────────────────────
+  u("usda-228","Bagel, plain",272,10,53,1.7,2.3,"grains",["1 bagel (98g)",98]),
+  u("usda-229","Croissant",406,9,45,21,2.7,"grains",["1 medium (67g)",67]),
+  u("usda-230","Blueberry Muffin",377,6,55,16,1.5,"grains",["1 medium (113g)",113]),
+  u("usda-231","Pita Bread, white",275,9.1,55,1.2,2.2,"grains",["1 pita (60g)",60]),
+  u("usda-232","Tortilla, corn",238,6.1,51,3,4.7,"grains",["1 tortilla (26g)",26]),
+  u("usda-233","Flour Tortilla",303,8,51,7.7,2.3,"grains",["1 medium (45g)",45]),
+  u("usda-234","Sourdough Bread",274,10,54,1.5,2.4,"grains",["1 slice (32g)",32]),
+  u("usda-235","Rye Bread",259,8.5,48,3.3,6.2,"grains",["1 slice (32g)",32]),
+  u("usda-236","Pumpernickel Bread",250,8.5,47,2.7,7.5,"grains",["1 slice (32g)",32]),
+  u("usda-237","Waffles, plain",291,8.5,41,11,1.3,"grains",["1 waffle (75g)",75]),
+  u("usda-238","Pancakes, plain",227,7.5,37,6.3,1.4,"grains",["2 pancakes (86g)",86]),
+
+  // ── Legumes extended ────────────────────────────────────────────────────
+  u("usda-239","Kidney Beans, cooked",127,8.7,23,0.5,6.4,"legumes",["1/2 cup (89g)",89]),
+  u("usda-240","Navy Beans, cooked",140,8.2,26,0.6,9.6,"legumes",["1/2 cup (91g)",91]),
+  u("usda-241","Cannellini Beans, cooked",140,8.7,25,0.4,6.3,"legumes",["1/2 cup (89g)",89]),
+  u("usda-242","Split Peas, cooked",116,8.3,21,0.4,8.1,"legumes",["1/2 cup (98g)",98]),
+  u("usda-243","Mung Beans, cooked",105,7.1,19,0.4,7.6,"legumes",["1/2 cup (101g)",101]),
+  u("usda-244","Lima Beans, cooked",115,7.8,21,0.4,7,"legumes",["1/2 cup (94g)",94]),
+  u("usda-245","Pinto Beans, cooked",143,9.4,27,0.6,9,"legumes",["1/2 cup (86g)",86]),
+  u("usda-246","Fava Beans, cooked",110,7.9,20,0.4,5.4,"legumes",["1/2 cup (85g)",85]),
+  u("usda-247","Soybeans, cooked",173,17,10,9,6,"legumes",["1/2 cup (86g)",86]),
+  u("usda-248","Tempeh",193,19,9,11,0,"soy",["1/2 cup (83g)",83]),
+];

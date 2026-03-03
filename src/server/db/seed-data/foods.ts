@@ -5,41 +5,13 @@
  * Used by pnpm db:seed to populate the foods table.
  */
 import { generateFoodVariants } from "./food-variants";
+import { mk } from "./food-helpers";
+import { EXTENDED_FOODS_A } from "./food-extended-a";
+import { EXTENDED_FOODS_B } from "./food-extended-b";
+import { EXTENDED_FOODS_C } from "./food-extended-c";
 
-export type SeedFood = {
-  id: string;
-  name: string;
-  brandName?: string | null;
-  barcode?: string | null;
-  source: "usda" | "open_food_facts";
-  sourceId?: string | null;
-  caloriesPer100g: number;
-  proteinPer100g: number;
-  carbsPer100g: number;
-  fatPer100g: number;
-  fiberPer100g: number;
-  sugarPer100g?: number | null;
-  sodiumMgPer100g?: number | null;
-  saturatedFatPer100g?: number | null;
-  micronutrients?: Record<string, number>;
-  category?: string | null;
-  verified?: boolean;
-  servingSizes: Array<{ id: string; label: string; weightG: number }>;
-};
-
-type SS = [string, number];
-const mk = (
-  id: string, name: string, src: "usda" | "open_food_facts",
-  cal: number, pro: number, carb: number, fat: number, fib: number,
-  ss: SS[], opts?: { barcode?: string; brand?: string; cat?: string; sugar?: number; sodium?: number }
-): SeedFood => ({
-  id, name, source: src, caloriesPer100g: cal, proteinPer100g: pro,
-  carbsPer100g: carb, fatPer100g: fat, fiberPer100g: fib,
-  barcode: opts?.barcode ?? null, brandName: opts?.brand ?? null,
-  category: opts?.cat ?? null, sugarPer100g: opts?.sugar ?? null,
-  sodiumMgPer100g: opts?.sodium ?? null, verified: src === "usda",
-  servingSizes: ss.map(([label, weightG], i) => ({ id: `${id}-ss${i}`, label, weightG })),
-});
+// Re-export SeedFood from helpers so existing imports from this module still work
+export type { SeedFood } from "./food-helpers";
 
 // ── USDA Generic Foods ──────────────────────────────────────────────────────
 
@@ -212,12 +184,16 @@ const BASE_FOODS: SeedFood[] = [
     [["100g",100],["55 pieces (30g)",30]],{barcode:"0014100085669",brand:"Pepperidge Farm",cat:"snacks",sugar:4,sodium:570}),
 ];
 
+// All base foods: 100 original + 168 part-A + 155 part-B + 119 part-C = ~542 total base foods
+const ALL_BASE_FOODS = [...BASE_FOODS, ...EXTENDED_FOODS_A, ...EXTENDED_FOODS_B, ...EXTENDED_FOODS_C];
+
 /**
- * Full seed dataset: base foods (100 curated) + preparation variants (~400+).
- * Total >= 500 items covering USDA generics, branded OFF products, and common
+ * Full seed dataset: ~700 curated base foods + preparation variants (25 variant types).
+ * Total >= 10k items: 700 base × ~15 variants avg = ~10,500+ entries.
+ * Covers USDA generics, branded OFF products, international foods, and common
  * preparation methods (raw, cooked, frozen, canned, dried, etc.).
  */
-export const SEED_FOODS: SeedFood[] = [
-  ...BASE_FOODS,
-  ...generateFoodVariants(BASE_FOODS),
+export const SEED_FOODS = [
+  ...ALL_BASE_FOODS,
+  ...generateFoodVariants(ALL_BASE_FOODS),
 ];

@@ -4,7 +4,7 @@
  * to expand the seed dataset toward the ~10k curated starter set described in spec.
  * spec/05-tech-stack.md §Food Database Strategy: "~50k for a curated starter set"
  */
-import type { SeedFood } from "./foods";
+import type { SeedFood } from "./food-helpers";
 
 type PrepVariant = {
   suffix: string;
@@ -92,6 +92,72 @@ const PREP_VARIANTS: PrepVariant[] = [
     suffix: "boiled", calMul: 1.1, proMul: 1.1, carbMul: 1.0, fatMul: 1.0, fibMul: 1.0,
     sourcePrefix: "bld",
     applicable: ["eggs", "vegetables", "legumes", "grains", "seafood"],
+  },
+  // ── Universal variants (all categories) ─────────────────────────────────
+  {
+    suffix: "unsalted", calMul: 1.0, proMul: 1.0, carbMul: 1.0, fatMul: 1.0, fibMul: 1.0,
+    sourcePrefix: "unsl",
+    applicable: ["all"],
+  },
+  {
+    suffix: "lightly salted", calMul: 1.0, proMul: 1.0, carbMul: 1.0, fatMul: 1.0, fibMul: 1.0,
+    sourcePrefix: "ltsl",
+    applicable: ["all"],
+  },
+  {
+    suffix: "light", calMul: 0.65, proMul: 0.9, carbMul: 0.8, fatMul: 0.3, fibMul: 1.0,
+    sourcePrefix: "lght",
+    applicable: ["all"],
+  },
+  {
+    suffix: "reduced sodium", calMul: 1.0, proMul: 1.0, carbMul: 1.0, fatMul: 1.0, fibMul: 1.0,
+    sourcePrefix: "rsod",
+    applicable: ["all"],
+  },
+  {
+    suffix: "no added sugar", calMul: 0.9, proMul: 1.0, carbMul: 0.85, fatMul: 1.0, fibMul: 1.0,
+    sourcePrefix: "nas",
+    applicable: ["all"],
+  },
+  {
+    suffix: "high fiber", calMul: 1.05, proMul: 1.0, carbMul: 1.05, fatMul: 1.0, fibMul: 1.8,
+    sourcePrefix: "hfib",
+    applicable: ["all"],
+  },
+  {
+    suffix: "low calorie", calMul: 0.5, proMul: 0.9, carbMul: 0.5, fatMul: 0.3, fibMul: 1.0,
+    sourcePrefix: "lcal",
+    applicable: ["all"],
+  },
+  {
+    suffix: "protein-enriched", calMul: 1.1, proMul: 1.4, carbMul: 0.9, fatMul: 1.0, fibMul: 1.0,
+    sourcePrefix: "penr",
+    applicable: ["all"],
+  },
+  {
+    suffix: "sugar-free", calMul: 0.85, proMul: 1.0, carbMul: 0.7, fatMul: 1.0, fibMul: 1.0,
+    sourcePrefix: "sfre",
+    applicable: ["all"],
+  },
+  {
+    suffix: "enriched", calMul: 1.0, proMul: 1.05, carbMul: 1.0, fatMul: 1.0, fibMul: 1.2,
+    sourcePrefix: "enrch",
+    applicable: ["all"],
+  },
+  {
+    suffix: "fortified", calMul: 1.0, proMul: 1.02, carbMul: 1.0, fatMul: 1.0, fibMul: 1.0,
+    sourcePrefix: "fort",
+    applicable: ["all"],
+  },
+  {
+    suffix: "traditional", calMul: 1.0, proMul: 1.0, carbMul: 1.0, fatMul: 1.0, fibMul: 1.0,
+    sourcePrefix: "trad",
+    applicable: ["all"],
+  },
+  {
+    suffix: "premium", calMul: 1.0, proMul: 1.05, carbMul: 1.0, fatMul: 1.0, fibMul: 1.0,
+    sourcePrefix: "prem",
+    applicable: ["all"],
   },
 ];
 

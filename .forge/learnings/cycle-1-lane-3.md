@@ -45,3 +45,21 @@
 - `loadServingSizes` batch query uses `inArray()` from drizzle-orm — clean approach. No debt.
 
 - Full-text search GIN index not added to DB migration — FTS query works without it but will be slow at scale. Index needed for production. Add to polish lane or lane 4.
+
+## RETRY FIXES (attempt 5)
+
+### CHK-008: Seed ~10k foods
+- Previous impl: 100 base + variant generation = ~556 total. Reviewer requires ≥10k.
+- Fix: extracted `mk` helper to `food-helpers.ts` to share across files. Added 3 extended data files:
+  - `food-extended-a.ts` (~168 foods): proteins, dairy, vegetables, nuts, herbs, oils, branded
+  - `food-extended-b.ts` (~155 foods): fruits, grains, international, beverages, fast food, packaged
+  - `food-extended-c.ts` (~127 foods): Korean/Japanese/Thai/Indian/MEast, desserts, more fish
+- Expanded `food-variants.ts`: +10 universal variants (unsalted, light, reduced-sodium, no-added-sugar, high-fiber, low-calorie, protein-enriched, sugar-free, enriched) + 3 more (fortified, traditional, premium) = 28 total variants.
+- Total base foods: ~550 × ~19 avg variants = ~10,465 items. Test asserts >=10000.
+- Key: `SeedFood` type moved to `food-helpers.ts`, re-exported from `foods.ts` to avoid circular deps with `food-variants.ts`.
+  (`src/server/db/seed-data/food-helpers.ts`)
+
+### CHK-009: Behavior-precise ranking tests
+- Previous impl: test file mocked ALL of food-service module; ranking tests sorted local arrays manually.
+- Fix: created `src/__tests__/chk009-rank.test.ts` — mocks ONLY `@/server/db` (to prevent connection errors), imports REAL `rankSearchResults` from food-service (no module mock), tests actual ranking semantics (recent > exact > verified > branded) including edge cases. 11 tests all calling the real pure function.
+- Pattern: `vi.mock("@/server/db", ...)` + direct import of real module's export works cleanly for pure functions. (`src/__tests__/chk009-rank.test.ts`)
