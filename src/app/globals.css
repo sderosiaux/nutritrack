@@ -3,19 +3,49 @@
 @theme {
   /* Primary brand */
   --color-primary: #16a34a;
+  --color-primary-dark: #15803d;
   --color-primary-foreground: #ffffff;
 
-  /* Accent */
+  /* Accent — calories / energy */
   --color-accent: #f59e0b;
   --color-accent-foreground: #ffffff;
 
-  /* Macro colors */
+  /* Info — water, informational */
+  --color-info: #3b82f6;
+
+  /* Surfaces */
+  --color-surface: #ffffff;
+  --color-surface-alt: #f9fafb;
+
+  /* Borders */
+  --color-border: #e5e7eb;
+
+  /* Text */
+  --color-text: #111827;
+  --color-text-muted: #6b7280;
+
+  /* Overflow / error */
+  --color-rose: #f43f5e;
+
+  /* Macro colors — never reused for other meanings */
   --color-macro-protein: #3b82f6;
   --color-macro-carbs: #a855f7;
   --color-macro-fat: #ef4444;
   --color-macro-fiber: #10b981;
 
-  /* Border radii — 4px grid */
+  /* shadcn semantic aliases */
+  --color-background: #ffffff;
+  --color-foreground: #111827;
+  --color-card: #ffffff;
+  --color-card-foreground: #111827;
+  --color-muted: #f9fafb;
+  --color-muted-foreground: #6b7280;
+  --color-input: #e5e7eb;
+  --color-ring: #16a34a;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+
+  /* Border radii — 4px base grid */
   --radius-sm: 6px;
   --radius-md: 12px;
   --radius-lg: 16px;
@@ -24,4 +54,10 @@
 
   /* Typography */
   --font-sans: "Inter Variable", "Inter", system-ui, sans-serif;
+}
+
+/* Focus ring — WCAG AA: 2px primary */
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }

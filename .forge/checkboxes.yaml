@@ -45,8 +45,8 @@
   source: "spec/06-ux-design.md:§Design System"
   milestone: "M0"
   lane: 2
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk005-design-system.test.tsx:16"
   commit: null
 
 - id: "CHK-006"
@@ -54,8 +54,8 @@
   source: "spec/04-screens.md:§Navigation Structure"
   milestone: "M0"
   lane: 2
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk006-app-shell.test.tsx:25"
   commit: null
 
 - id: "CHK-007"
@@ -63,8 +63,8 @@
   source: "spec/04-screens.md:§AUTH SCREENS"
   milestone: "M0"
   lane: 2
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk007-auth-screens.test.tsx:20"
   commit: null
 
 - id: "CHK-050"
@@ -72,8 +72,8 @@
   source: "spec/05-tech-stack.md:§Frontend"
   milestone: "M0"
   lane: 2
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk050-client-setup.test.tsx:17"
   commit: null
 
 - id: "CHK-053"
@@ -81,8 +81,8 @@
   source: "spec/03-user-flows.md:§Flow 1"
   milestone: "M0"
   lane: 2
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk053-guest-mode.test.tsx:32"
   commit: null
 
 # ── M1: Core Log Loop ──────────────────────────────────────────

@@ -1,0 +1,139 @@
+// @vitest-environment jsdom
+import { describe, it, expect, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { QueryClient } from "@tanstack/react-query";
+import { createQueryClient, createOptimisticMutation } from "@/lib/query-client";
+import { useUIStore } from "@/lib/stores/ui-store";
+import { useGuestStore } from "@/lib/stores/guest-store";
+import { QueryProvider } from "@/components/providers/query-provider";
+
+// Mock next/navigation
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  usePathname: () => "/today",
+}));
+
+describe("CHK-050: TanStack Query client config", () => {
+  it("createQueryClient returns a QueryClient instance", () => {
+    const client = createQueryClient();
+    expect(client).toBeInstanceOf(QueryClient);
+  });
+
+  it("default staleTime is 60s (1 minute)", () => {
+    const client = createQueryClient();
+    const defaults = client.getDefaultOptions();
+    expect(defaults.queries?.staleTime).toBe(60 * 1000);
+  });
+
+  it("default gcTime is 5 minutes", () => {
+    const client = createQueryClient();
+    const defaults = client.getDefaultOptions();
+    expect(defaults.queries?.gcTime).toBe(5 * 60 * 1000);
+  });
+
+  it("default retry is 1", () => {
+    const client = createQueryClient();
+    const defaults = client.getDefaultOptions();
+    expect(defaults.queries?.retry).toBe(1);
+  });
+});
+
+describe("CHK-050: Optimistic mutation helper", () => {
+  it("createOptimisticMutation returns object with onMutate, onError, onSettled, mutationFn", () => {
+    const client = createQueryClient();
+    const mutFn = vi.fn();
+    const opts = createOptimisticMutation({
+      queryClient: client,
+      queryKey: ["test"],
+      mutationFn: mutFn,
+      updateCache: (old: unknown[]) => old,
+    });
+    expect(typeof opts.mutationFn).toBe("function");
+    expect(typeof opts.onMutate).toBe("function");
+    expect(typeof opts.onError).toBe("function");
+    expect(typeof opts.onSettled).toBe("function");
+  });
+
+  it("onMutate applies optimistic update to cache", async () => {
+    const client = createQueryClient();
+    client.setQueryData(["items"], ["a", "b"]);
+
+    const opts = createOptimisticMutation({
+      queryClient: client,
+      queryKey: ["items"],
+      mutationFn: vi.fn(),
+      updateCache: (old: string[], input: string) => [...old, input],
+    });
+
+    const ctx = await opts.onMutate("c");
+    expect(client.getQueryData<string[]>(["items"])).toEqual(["a", "b", "c"]);
+    expect(ctx?.previous).toEqual(["a", "b"]);
+  });
+
+  it("onError rolls back cache to previous state", async () => {
+    const client = createQueryClient();
+    client.setQueryData(["items"], ["a", "b"]);
+
+    const opts = createOptimisticMutation({
+      queryClient: client,
+      queryKey: ["items"],
+      mutationFn: vi.fn(),
+      updateCache: (old: string[], input: string) => [...old, input],
+    });
+
+    const ctx = await opts.onMutate("c");
+    // Simulate error rollback
+    opts.onError(new Error("fail"), "c", ctx);
+    expect(client.getQueryData<string[]>(["items"])).toEqual(["a", "b"]);
+  });
+});
+
+describe("CHK-050: Zustand UI store", () => {
+  it("initializes with selectedDate as today's date string", () => {
+    const state = useUIStore.getState();
+    const today = new Date().toISOString().split("T")[0];
+    expect(state.selectedDate).toBe(today);
+  });
+
+  it("setSelectedDate updates the date", () => {
+    useUIStore.getState().setSelectedDate("2026-01-15");
+    expect(useUIStore.getState().selectedDate).toBe("2026-01-15");
+    // Reset
+    useUIStore.getState().setSelectedDate(new Date().toISOString().split("T")[0]);
+  });
+
+  it("sidebarOpen defaults to false", () => {
+    const state = useUIStore.getState();
+    expect(state.sidebarOpen).toBe(false);
+  });
+
+  it("toggleSidebar flips sidebarOpen", () => {
+    useUIStore.getState().toggleSidebar();
+    expect(useUIStore.getState().sidebarOpen).toBe(true);
+    useUIStore.getState().toggleSidebar();
+    expect(useUIStore.getState().sidebarOpen).toBe(false);
+  });
+});
+
+describe("CHK-050: Zustand guest store", () => {
+  it("isGuest defaults to false", () => {
+    expect(useGuestStore.getState().isGuest).toBe(false);
+  });
+
+  it("setIsGuest(true) marks session as guest", () => {
+    useGuestStore.getState().setIsGuest(true);
+    expect(useGuestStore.getState().isGuest).toBe(true);
+    useGuestStore.getState().setIsGuest(false);
+  });
+});
+
+describe("CHK-050: QueryProvider component", () => {
+  it("renders children inside QueryProvider", () => {
+    render(
+      <QueryProvider>
+        <div data-testid="child">Hello</div>
+      </QueryProvider>
+    );
+    expect(screen.getByTestId("child")).toBeDefined();
+  });
+});
