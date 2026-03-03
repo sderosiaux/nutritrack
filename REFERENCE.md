@@ -1,8 +1,8 @@
 # NutriTrack Technical Reference
 
 **Project**: Open-source AI nutrition tracker (Foodvisor clone)
-**Status**: Lane 1 (infra-foundation) complete, with lanes 2–3 integrated
-**Last Updated**: 2026-03-04 (reflecting lanes 1–3 implementation state)
+**Status**: Lanes 1–2 approved ✅ | Lane 3 code present (pending approval)
+**Last Updated**: 2026-03-03 (reflecting lanes 1–2 approved state)
 
 ---
 
@@ -768,7 +768,7 @@ pnpm db:studio        # Open Drizzle Studio GUI
 
 ---
 
-## Lane 2: Design Shell (COMPLETED – commit d5ac5a5)
+## Lane 2: Design Shell (APPROVED – commit df00e0d)
 
 ### Checkpoints Completed
 - **CHK-005**: Design system (CSS variables, shadcn/ui theming, responsive utilities)
@@ -797,7 +797,7 @@ pnpm db:studio        # Open Drizzle Studio GUI
 
 ---
 
-## Lane 3: Food Database (COMPLETED – commit f5468fe)
+## Lane 3: Food Database (CODE PRESENT – commit f5468fe, pending approval)
 
 ### Checkpoints Completed
 - **CHK-008**: Food DB seeding script (USDA + Open Food Facts import, ~10k curated foods)
@@ -986,13 +986,16 @@ pnpm test:e2e            # Playwright E2E
 
 ## Current Implementation Status
 
-**Completed** (Lanes 1–3):
-- ✅ **Lane 1**: Infrastructure foundation (CHK-001–004)
+**Approved** (on main branch):
+- ✅ **Lane 1**: Infrastructure foundation (CHK-001–004) — Approved commit 6c1cac7
   - Project scaffold, Docker Compose, database schemas, authentication
-- ✅ **Lane 2**: Design shell (CHK-005–007, CHK-050, CHK-053)
+- ✅ **Lane 2**: Design shell (CHK-005–007, CHK-050, CHK-053) — Approved commit df00e0d
   - Design system, app shell layout, auth screens, client setup, guest mode
-- ✅ **Lane 3**: Food database (CHK-008–011, CHK-051)
+
+**Code Present** (pending approval):
+- 🔄 **Lane 3**: Food database (CHK-008–011, CHK-051) — Commit f5468fe
   - Food seeding (~10k items), search API, barcode lookup, favorites, custom foods
+  - Status: Multiple review attempts, awaiting approval
 
 **In Progress / Next**:
 - **Lane 4**: Meal logging API (CHK-012–014)
@@ -1008,8 +1011,8 @@ pnpm test:e2e            # Playwright E2E
 - **Repository**: https://github.com/sderosiaux/nutritrack
 - **Spec**: See `spec/` directory (00-overview through 08-milestones)
 - **Issues**: GitHub Issues
-- **Status**: Lanes 1–3 of 13 complete, Cycle 1 (forge commit 6c1cac7)
+- **Status**: Lanes 1–2 of 13 approved, Lane 3 code present (pending review), Cycle 1
 
 ---
 
-*This reference reflects the codebase state after lanes 1–3 implementation. It documents the full-stack infrastructure, design system, and food database API. It will be updated as additional lanes complete.*
+*This reference reflects the codebase state after lane 2 approval (df00e0d). It documents the full-stack infrastructure and design system. Lane 3 (food database API) code is present but pending final review and approval. The reference will be updated after each lane completion.*
