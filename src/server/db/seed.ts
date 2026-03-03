@@ -4,7 +4,7 @@
  * Run via: pnpm db:seed
  */
 import { SEED_FOODS } from "./seed-data/foods";
-import { foods, servingSizes } from "./schema";
+import { foods, servingSizes, user } from "./schema";
 
 type InsertableDb = {
   insert: (table: unknown) => {
@@ -39,6 +39,24 @@ export async function seedFoods(db: InsertableDb): Promise<void> {
   await db.insert(servingSizes).values(servingRows).onConflictDoNothing();
 }
 
+/** Insert a demo user for development/onboarding testing. */
+export async function seedDemoUser(db: InsertableDb): Promise<void> {
+  await db.insert(user).values({
+    id: "demo-user-001",
+    name: "Demo User",
+    email: "demo@nutritrack.app",
+    emailVerified: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  } as never).onConflictDoNothing();
+}
+
+/** Seed everything: foods, serving sizes, and demo user. */
+export async function seedAll(db: InsertableDb): Promise<void> {
+  await seedFoods(db);
+  await seedDemoUser(db);
+}
+
 async function main() {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL required");
@@ -51,8 +69,8 @@ async function main() {
   const db = drizzle(client, { schema });
 
   console.log("Seed: starting");
-  await seedFoods(db as never);
-  console.log(`Seed: inserted ${SEED_FOODS.length} foods`);
+  await seedAll(db as never);
+  console.log(`Seed: inserted ${SEED_FOODS.length} foods + demo user`);
 
   await client.end();
 }

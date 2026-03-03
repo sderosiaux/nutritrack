@@ -93,8 +93,8 @@
   milestone: "M1"
   lane: 3
   status: "DONE"
-  test: "src/__tests__/chk008-seed.test.ts:33"
-  commit: "946fa64"
+  test: "src/__tests__/chk008-seed.test.ts:34"
+  commit: "TBD"
 
 - id: "CHK-009"
   description: "Food search API: GET /api/v1/foods/search with PostgreSQL full-text search, fuzzy ranking (recent > exact > verified > branded), multi-language via nameTranslations JSONB, pagination"
@@ -102,8 +102,8 @@
   milestone: "M1"
   lane: 3
   status: "DONE"
-  test: "src/__tests__/chk009-food-search.test.ts:45"
-  commit: "946fa64"
+  test: "src/__tests__/chk009-food-search.test.ts:47"
+  commit: "TBD"
 
 - id: "CHK-010"
   description: "Food detail, recent, favorites API: GET /api/v1/foods/:id, /recent, /favorites, POST/DELETE /favorites/:foodId"
@@ -111,8 +111,8 @@
   milestone: "M1"
   lane: 3
   status: "DONE"
-  test: "src/__tests__/chk010-food-detail.test.ts:47"
-  commit: "946fa64"
+  test: "src/__tests__/chk010-recent-service.test.ts:60"
+  commit: "TBD"
 
 - id: "CHK-011"
   description: "Barcode lookup API: GET /api/v1/foods/barcode/:barcode — local DB first, Open Food Facts fallback, error code barcode_not_found"
@@ -121,7 +121,7 @@
   lane: 3
   status: "DONE"
   test: "src/__tests__/chk011-barcode.test.ts:44"
-  commit: "946fa64"
+  commit: "TBD"
 
 - id: "CHK-051"
   description: "Custom food CRUD API: POST /api/v1/foods (CreateFoodDto, source=user_created), PUT /api/v1/foods/:id (own foods only), DELETE /api/v1/foods/:id (own foods only)"
@@ -130,7 +130,7 @@
   lane: 3
   status: "DONE"
   test: "src/__tests__/chk051-custom-food.test.ts:51"
-  commit: "946fa64"
+  commit: "TBD"
 
 - id: "CHK-012"
   description: "Meal entry CRUD API: POST/PUT/DELETE /api/v1/logs/:date/meals with computed macro snapshot (calories, protein, carbs, fat, fiber) stored on write"

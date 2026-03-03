@@ -1,6 +1,6 @@
 /**
  * CHK-008: Food DB seeding script.
- * Verifies: seed data exists with correct structure, script inserts foods.
+ * Verifies: seed data exists with correct structure, script inserts foods + demo user.
  * Source: spec/05-tech-stack.md §Food Database Strategy
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -28,9 +28,12 @@ vi.mock("@/server/db", () => ({
   },
   foods: {},
   servingSizes: {},
+  user: {},
 }));
 
 describe("CHK-008: Food DB seeding", () => {
+  beforeEach(() => vi.clearAllMocks());
+
   it("seed-data/foods.ts file exists", () => {
     const path = join(root, "src/server/db/seed-data/foods.ts");
     expect(existsSync(path), `Missing: ${path}`).toBe(true);
@@ -41,9 +44,9 @@ describe("CHK-008: Food DB seeding", () => {
     expect(Array.isArray(SEED_FOODS)).toBe(true);
   });
 
-  it("seed data has >= 100 food items", async () => {
+  it("seed data has >= 500 food items (curated starter set)", async () => {
     const { SEED_FOODS } = await import("@/server/db/seed-data/foods");
-    expect(SEED_FOODS.length).toBeGreaterThanOrEqual(100);
+    expect(SEED_FOODS.length).toBeGreaterThanOrEqual(500);
   });
 
   it("each food item has required nutrition fields", async () => {
@@ -87,10 +90,22 @@ describe("CHK-008: Food DB seeding", () => {
     expect(typeof seedModule.seedFoods).toBe("function");
   });
 
+  it("seed.ts exports a seedDemoUser function for development setup", async () => {
+    const seedModule = await import("@/server/db/seed");
+    expect(typeof seedModule.seedDemoUser).toBe("function");
+  });
+
   it("seedFoods inserts foods and serving sizes into DB", async () => {
     const { seedFoods } = await import("@/server/db/seed");
     const { db } = await import("@/server/db");
     await seedFoods(db as never);
+    expect(db.insert).toHaveBeenCalled();
+  });
+
+  it("seedDemoUser inserts a demo user into DB", async () => {
+    const { seedDemoUser } = await import("@/server/db/seed");
+    const { db } = await import("@/server/db");
+    await seedDemoUser(db as never);
     expect(db.insert).toHaveBeenCalled();
   });
 });

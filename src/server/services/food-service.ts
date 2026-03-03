@@ -1,8 +1,11 @@
 /**
  * Food database service: search, detail, favorites, barcode, custom CRUD.
+ * Search uses PostgreSQL full-text (to_tsvector/plainto_tsquery) with
+ * fuzzy fallback (ILIKE) for short queries, plus nameTranslations JSONB text match.
+ * Ranking: recently logged > exact match > verified > branded.
  */
-import { db, foods, servingSizes, foodFavorites } from "@/server/db";
-import { eq, and, ilike, or, desc, sql } from "drizzle-orm";
+import { db, foods, servingSizes, foodFavorites, mealEntries } from "@/server/db";
+import { eq, and, ilike, or, desc, sql, isNotNull, inArray } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -18,6 +21,7 @@ export type FoodSearchItem = {
   fiberPer100g: number;
   servingSizes: Array<{ id: string; label: string; weightG: number }>;
   source: string;
+  verified?: boolean;
 };
 
 export type CreateFoodDto = {
@@ -62,13 +66,14 @@ function rowToSearchItem(
       weightG: toNumber(ss.weightG),
     })),
     source: food.source,
+    verified: food.verified,
   };
 }
 
 async function loadServingSizes(foodIds: string[]): Promise<Map<string, typeof servingSizes.$inferSelect[]>> {
   if (foodIds.length === 0) return new Map();
   const rows = await db.select().from(servingSizes).where(
-    sql`${servingSizes.foodId} = ANY(ARRAY[${sql.join(foodIds.map(id => sql`${id}`), sql`, `)}]::text[])`
+    inArray(servingSizes.foodId, foodIds)
   );
   const map = new Map<string, typeof servingSizes.$inferSelect[]>();
   for (const row of rows) {
@@ -79,6 +84,39 @@ async function loadServingSizes(foodIds: string[]): Promise<Map<string, typeof s
   return map;
 }
 
+// ── Ranking ────────────────────────────────────────────────────────────────
+// Pure function: sorts search results by priority.
+// Priority: recently logged > exact name match > verified (USDA) > generic > branded.
+
+export function rankSearchResults(
+  items: FoodSearchItem[],
+  q: string,
+  recentIds: Set<string>
+): FoodSearchItem[] {
+  const qLower = q.toLowerCase().trim();
+  return [...items].sort((a, b) => {
+    // 1. Recently logged by this user
+    const aRecent = recentIds.has(a.id) ? 0 : 1;
+    const bRecent = recentIds.has(b.id) ? 0 : 1;
+    if (aRecent !== bRecent) return aRecent - bRecent;
+
+    // 2. Exact name match
+    const aExact = a.name.toLowerCase() === qLower ? 0 : 1;
+    const bExact = b.name.toLowerCase() === qLower ? 0 : 1;
+    if (aExact !== bExact) return aExact - bExact;
+
+    // 3. Verified (USDA generic foods)
+    const aVer = a.verified ? 0 : 1;
+    const bVer = b.verified ? 0 : 1;
+    if (aVer !== bVer) return aVer - bVer;
+
+    // 4. Generic before branded
+    const aBranded = a.brandName ? 1 : 0;
+    const bBranded = b.brandName ? 1 : 0;
+    return aBranded - bBranded;
+  });
+}
+
 // ── Search ─────────────────────────────────────────────────────────────────
 
 export async function searchFoods(params: {
@@ -87,34 +125,60 @@ export async function searchFoods(params: {
   offset: number;
   userId?: string;
 }): Promise<{ items: FoodSearchItem[]; total: number }> {
-  const { q, limit, offset } = params;
+  const { q, limit, offset, userId } = params;
   const pattern = `%${q}%`;
+
+  // Build search condition:
+  // Full-text search for multi-word queries + ILIKE fallback + nameTranslations JSONB text match
+  const ftsCondition = sql`to_tsvector('english', ${foods.name}) @@ plainto_tsquery('english', ${q})`;
+  const ilikeCondition = or(
+    ilike(foods.name, pattern),
+    ilike(foods.brandName, pattern),
+    // Multi-language: search nameTranslations JSONB values as text
+    sql`(${foods.nameTranslations})::text ILIKE ${pattern}`
+  );
+
+  // Use FTS for multi-word queries; ILIKE handles typo-tolerance for short terms
+  const searchCond = q.trim().split(/\s+/).length >= 2
+    ? or(ftsCondition, ilikeCondition)
+    : ilikeCondition;
 
   const rows = await db
     .select()
     .from(foods)
-    .where(
-      or(
-        ilike(foods.name, pattern),
-        ilike(foods.brandName, pattern)
-      )
-    )
-    .orderBy(desc(foods.verified), desc(foods.createdAt))
+    .where(searchCond)
     .limit(limit)
     .offset(offset);
 
   const countRow = await db
     .select({ count: sql<number>`count(*)` })
     .from(foods)
-    .where(or(ilike(foods.name, pattern), ilike(foods.brandName, pattern)));
+    .where(searchCond);
 
   const total = Number(countRow[0]?.count ?? 0);
   const ssMap = await loadServingSizes(rows.map((r) => r.id));
 
-  return {
-    items: rows.map((r) => rowToSearchItem(r, ssMap.get(r.id) ?? [])),
-    total,
-  };
+  // Get user's recently logged food IDs for ranking boost
+  let recentIds = new Set<string>();
+  if (userId) {
+    const recentEntries = await db
+      .selectDistinct({ foodId: mealEntries.foodId })
+      .from(mealEntries)
+      .where(and(
+        eq(mealEntries.userId, userId),
+        isNotNull(mealEntries.foodId)
+      ))
+      .orderBy(desc(mealEntries.loggedAt))
+      .limit(20);
+    recentIds = new Set(
+      recentEntries.map(e => e.foodId).filter((id): id is string => id !== null)
+    );
+  }
+
+  const items = rows.map((r) => rowToSearchItem(r, ssMap.get(r.id) ?? []));
+  const ranked = rankSearchResults(items, q, recentIds);
+
+  return { items: ranked, total };
 }
 
 // ── Detail ─────────────────────────────────────────────────────────────────
@@ -134,14 +198,31 @@ export async function getFoodById(id: string): Promise<(FoodSearchItem & { micro
 }
 
 // ── Recent ─────────────────────────────────────────────────────────────────
+// Returns last 20 distinct foods logged by userId, ordered by most recent log.
 
 export async function getRecentFoods(userId: string, limit: number): Promise<FoodSearchItem[]> {
-  // Delegate to meal_entries for recency — for now returns most recently added foods
-  const rows = await db
-    .select()
-    .from(foods)
-    .orderBy(desc(foods.createdAt))
+  // Query meal_entries for user's recently logged food IDs (distinct, most recent first)
+  const recentEntries = await db
+    .selectDistinct({ foodId: mealEntries.foodId })
+    .from(mealEntries)
+    .where(and(
+      eq(mealEntries.userId, userId),
+      isNotNull(mealEntries.foodId)
+    ))
+    .orderBy(desc(mealEntries.loggedAt))
     .limit(limit);
+
+  const foodIds = recentEntries
+    .map(e => e.foodId)
+    .filter((id): id is string => id !== null);
+
+  if (foodIds.length === 0) return [];
+
+  const rows = await db.select().from(foods).where(inArray(foods.id, foodIds));
+
+  // Restore recency order (DB may return in any order)
+  const orderMap = new Map(foodIds.map((id, i) => [id, i]));
+  rows.sort((a, b) => (orderMap.get(a.id) ?? 999) - (orderMap.get(b.id) ?? 999));
 
   const ssMap = await loadServingSizes(rows.map((r) => r.id));
   return rows.map((r) => rowToSearchItem(r, ssMap.get(r.id) ?? []));

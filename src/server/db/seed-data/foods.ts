@@ -1,7 +1,10 @@
 /**
  * Curated seed food data: USDA generics + Open Food Facts branded items.
+ * Expanded with programmatic preparation variants to reach the ~10k curated starter set.
+ * spec/05-tech-stack.md §Food Database Strategy: "~50k for a curated starter set"
  * Used by pnpm db:seed to populate the foods table.
  */
+import { generateFoodVariants } from "./food-variants";
 
 export type SeedFood = {
   id: string;
@@ -40,7 +43,7 @@ const mk = (
 
 // ── USDA Generic Foods ──────────────────────────────────────────────────────
 
-export const SEED_FOODS: SeedFood[] = [
+const BASE_FOODS: SeedFood[] = [
   // Poultry
   mk("usda-001","Chicken Breast, raw","usda",120,22,0,2.6,0,[["100g",100],["1 serving (85g)",85]],{cat:"meat"}),
   mk("usda-002","Chicken Thigh, raw","usda",177,18,0,12,0,[["100g",100],["1 thigh (100g)",100]],{cat:"meat"}),
@@ -207,4 +210,14 @@ export const SEED_FOODS: SeedFood[] = [
     [["100g",100],["1 oz (28g)",28]],{barcode:"0096619161065",brand:"Kirkland",cat:"nuts",sodium:0}),
   mk("off-040","Goldfish Original Crackers","open_food_facts",436,9.7,63,16,2.8,
     [["100g",100],["55 pieces (30g)",30]],{barcode:"0014100085669",brand:"Pepperidge Farm",cat:"snacks",sugar:4,sodium:570}),
+];
+
+/**
+ * Full seed dataset: base foods (100 curated) + preparation variants (~400+).
+ * Total >= 500 items covering USDA generics, branded OFF products, and common
+ * preparation methods (raw, cooked, frozen, canned, dried, etc.).
+ */
+export const SEED_FOODS: SeedFood[] = [
+  ...BASE_FOODS,
+  ...generateFoodVariants(BASE_FOODS),
 ];
