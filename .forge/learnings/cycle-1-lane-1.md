@@ -46,6 +46,13 @@
 
 - `src/server/db/seed.ts` is a stub — actual food seeding is in lane 3.
 
+## REVIEW LESSONS (attempt 4→5)
+
+- Reviewer requires tests that verify **concrete HTTP route paths**, not just API object property existence. Checking `auth.api.refreshToken` is truthy does NOT satisfy a path contract test.
+- Better Auth exposes `/api/auth/refresh-token` but spec wants `/api/auth/refresh`. Fix: create dedicated route at `src/app/api/auth/refresh/route.ts` that rewrites the URL to `/api/auth/refresh-token` before calling `auth.handler`.
+- Test must verify: (a) the route file exists, (b) it exports POST, (c) it calls `auth.handler` with the internal path `/api/auth/refresh-token`. Mock `auth.handler` in tests to avoid DB.
+- When spec path ≠ library path, always create a thin adapter route — never just document the divergence.
+
 ## REVIEW LESSONS (attempt 3→4)
 
 - Reviewer checks every spec verb. "refresh" in CHK-004 maps to `auth.api.refreshToken` (Better Auth's `/api/auth/refresh-token`). Must assert it explicitly — session config `updateAge` alone does not satisfy the test gap.
