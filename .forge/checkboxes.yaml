@@ -1,0 +1,552 @@
+# forge:plan --cycle 1
+# 59 checkboxes — amended + 10 new (CHK-050..059)
+# Gap fixes: GAP-01..31 per review 2026-03-03
+
+# ── M0: Foundation ──────────────────────────────────────────────
+
+- id: "CHK-001"
+  description: "Scaffold pnpm monorepo with Next.js 15 (App Router), TypeScript, Tailwind v4, Hono API routes, Vitest, Playwright"
+  source: "spec/05-tech-stack.md:§Stack Decision"
+  milestone: "M0"
+  lane: 1
+  status: "DONE"
+  test: "src/__tests__/chk001-scaffold.test.ts:12"
+  commit: null
+
+- id: "CHK-002"
+  description: "Docker Compose dev config: PostgreSQL 16, Redis, MinIO, Ollama (optional), app service with hot-reload"
+  source: "spec/05-tech-stack.md:§Infrastructure (Self-hosted)"
+  milestone: "M0"
+  lane: 1
+  status: "DONE"
+  test: "src/__tests__/chk001-scaffold.test.ts:12"
+  commit: null
+
+- id: "CHK-003"
+  description: "Drizzle ORM setup + initial migration: User, UserProfile, DailyTargets, Food (with nameTranslations JSONB + micronutrients JSONB), ServingSize, MealEntry, WaterEntry, WeightEntry, ActivityEntry, Exercise, FavoriteRecipes tables"
+  source: "spec/02-data-models.md:§Core Models"
+  milestone: "M0"
+  lane: 1
+  status: "DONE"
+  test: "src/__tests__/chk003-schema.test.ts:12"
+  commit: null
+
+- id: "CHK-004"
+  description: "Better Auth integration: email/password register, login, logout, refresh, forgot/reset password, JWT session middleware"
+  source: "spec/07-api.md:§Auth"
+  milestone: "M0"
+  lane: 1
+  status: "DONE"
+  test: "src/__tests__/chk004-auth.test.ts:11"
+  commit: null
+
+- id: "CHK-005"
+  description: "Design system: Tailwind theme with spec tokens (Primary #16A34A, Accent #F59E0B, macro colors: Protein #3B82F6 / Carbs #A855F7 / Fat #EF4444 / Fiber #10B981), Inter variable font, 4px spacing grid, border-radii (sm:6px md:12px lg:16px xl:24px full:9999px), shadcn/ui base components (Button, Input, Card, Dialog, Sheet, Toast). NO traffic-light food classification."
+  source: "spec/06-ux-design.md:§Design System"
+  milestone: "M0"
+  lane: 2
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-006"
+  description: "App shell: responsive layout — bottom tab bar 5 items (mobile), collapsible left sidebar (tablet/desktop), global FAB '+' button, routing structure, layout breakpoints (mobile <640px / tablet 640-1024px / desktop >1024px)"
+  source: "spec/04-screens.md:§Navigation Structure"
+  milestone: "M0"
+  lane: 2
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-007"
+  description: "Auth screens: Landing/Welcome (S-AUTH-1) with 'Get Started', 'Sign In', 'Continue as Guest' options; Login (S-AUTH-4) with email/password + forgot password; account creation form"
+  source: "spec/04-screens.md:§AUTH SCREENS"
+  milestone: "M0"
+  lane: 2
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-050"
+  description: "Client library setup: Zustand store scaffold, TanStack Query provider + query client config with optimistic mutation helpers (log entries appear instantly, rollback on error), React Hook Form + Zod validation utilities"
+  source: "spec/05-tech-stack.md:§Frontend"
+  milestone: "M0"
+  lane: 2
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-053"
+  description: "Guest mode: 'Continue as Guest' flow from S-AUTH-1, IndexedDB-first data path via Dexie.js for all meal/water/weight entries, persistent non-intrusive 'Back up your data →' banner (no forced signup prompts), guest-to-account upgrade with data migration"
+  source: "spec/03-user-flows.md:§Flow 1"
+  milestone: "M0"
+  lane: 2
+  status: "pending"
+  test: null
+  commit: null
+
+# ── M1: Core Log Loop ──────────────────────────────────────────
+
+- id: "CHK-008"
+  description: "Food DB seeding script: import USDA FoodData Central (generic foods, micronutrients) + Open Food Facts top 50k (branded, barcodes) into foods/serving_sizes tables; pnpm db:seed loads ~10k curated foods + demo user"
+  source: "spec/05-tech-stack.md:§Food Database Strategy"
+  milestone: "M1"
+  lane: 3
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-009"
+  description: "Food search API: GET /api/v1/foods/search with PostgreSQL full-text search, fuzzy ranking (recent > exact > verified > branded), multi-language via nameTranslations JSONB, pagination"
+  source: "spec/07-api.md:§Food Database"
+  milestone: "M1"
+  lane: 3
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-010"
+  description: "Food detail, recent, favorites API: GET /api/v1/foods/:id, /recent, /favorites, POST/DELETE /favorites/:foodId"
+  source: "spec/07-api.md:§Food Database"
+  milestone: "M1"
+  lane: 3
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-011"
+  description: "Barcode lookup API: GET /api/v1/foods/barcode/:barcode — local DB first, Open Food Facts fallback, error code barcode_not_found"
+  source: "spec/07-api.md:§Food Database"
+  milestone: "M1"
+  lane: 3
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-051"
+  description: "Custom food CRUD API: POST /api/v1/foods (CreateFoodDto, source=user_created), PUT /api/v1/foods/:id (own foods only), DELETE /api/v1/foods/:id (own foods only)"
+  source: "spec/07-api.md:§Food Database"
+  milestone: "M1"
+  lane: 3
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-012"
+  description: "Meal entry CRUD API: POST/PUT/DELETE /api/v1/logs/:date/meals with computed macro snapshot (calories, protein, carbs, fat, fiber) stored on write"
+  source: "spec/07-api.md:§Meal Logging"
+  milestone: "M1"
+  lane: 4
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-013"
+  description: "Water entry API: POST/DELETE /api/v1/logs/:date/water"
+  source: "spec/07-api.md:§Meal Logging"
+  milestone: "M1"
+  lane: 4
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-014"
+  description: "Daily log API: GET /api/v1/logs/:date — returns DailySummary (computed query, not stored): meals by slot, water entries, weight entry, activities, calorie/macro totals vs targets"
+  source: "spec/07-api.md:§Daily Log Response"
+  milestone: "M1"
+  lane: 4
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-015"
+  description: "Today dashboard UI (S-DASH-1): calorie ring (180px mobile / 220px tablet, amber fill, overflow → rose-500 ring + text, 600ms ease-out fill animation, tap → nutrition breakdown), macro bars (4 bars, spec colors, tap → sources), meal cards per slot, S-DASH-2 slot expansion (all entries, macros per row, swipe edit/delete), hydration tile (+250ml/+500ml quick-add), weight tile, activity tile, day swipe navigation, pull-to-refresh"
+  source: "spec/04-screens.md:§S-DASH-1"
+  milestone: "M1"
+  lane: 5
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-016"
+  description: "Food search UI (S-LOG-6, S-LOG-7): search bar (autofocus), filter chips (All/My Foods/Branded/Generic), results list with name/brand/kcal, serving picker dropdown, quantity input, live macro preview, meal slot selector, add button"
+  source: "spec/04-screens.md:§S-LOG-6"
+  milestone: "M1"
+  lane: 5
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-017"
+  description: "Log entry point modal (S-LOG-1): bottom sheet on mobile / side panel on tablet+, 4 options (Photo/Barcode/Search/Voice), recent entries (last 5, tap to re-log), favorite foods"
+  source: "spec/04-screens.md:§S-LOG-1"
+  milestone: "M1"
+  lane: 5
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-018"
+  description: "Journal/food log screen (S-JOURNAL-1): calendar strip (weekly view), day totals (kcal/protein/carbs/fat), meals accordion (breakfast/lunch/dinner/snacks), full nutrition line per entry, edit/delete per entry, copy day to today, pull-to-refresh; empty state: 'Start your day — log your first meal' + Log food CTA"
+  source: "spec/04-screens.md:§S-JOURNAL-1"
+  milestone: "M1"
+  lane: 5
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-032"
+  description: "Barcode scanner UI (S-LOG-4, S-LOG-5): camera viewfinder with ZXing barcode overlay, 'Enter barcode manually' fallback, product detail sheet (name/brand, nutrition per 100g + per serving, serving picker, quantity input, meal slot selector, add button)"
+  source: "spec/04-screens.md:§S-LOG-4"
+  milestone: "M1"
+  lane: 5
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-052"
+  description: "Custom food creation screen (S-LOG-9): form with name, brand (optional), serving size label + weight, nutrition per 100g (calories, protein, carbs, fat, fiber, sugar, sodium optional). Saves to 'My Foods' (source=user_created). Accessible from food search results when food not found."
+  source: "spec/04-screens.md:§S-LOG-9"
+  milestone: "M1"
+  lane: 5
+  status: "pending"
+  test: null
+  commit: null
+
+# ── M2: Profile & Personalization ──────────────────────────────
+
+- id: "CHK-019"
+  description: "Onboarding flow UI (S-AUTH-2, S-AUTH-3): 6-step wizard — goal / demographics (age, sex, height, weight) / activity level / dietary restrictions + allergies / target weight + pace / summary. Thin progress bar (not stepper), one question per screen, immediate highlight on selection, final screen animates calorie number counting up to target."
+  source: "spec/04-screens.md:§S-AUTH-2"
+  milestone: "M2"
+  lane: 6
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-020"
+  description: "TDEE calculation engine: Mifflin-St Jeor BMR (sex-specific), activity multiplier, calorie target per goal (maintain/lose/build), default macro split (protein 20% / fat 30% / carbs 50% per WHO/DRI). Manual macro override with redistribution: editing one macro auto-recalculates remaining calories across the others."
+  source: "spec/02-data-models.md:§Calorie Calculation (TDEE)"
+  milestone: "M2"
+  lane: 6
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-021"
+  description: "Profile API: GET /api/v1/profile, PUT /api/v1/profile, POST /api/v1/profile/recalculate-targets (recomputes DailyTargets from current UserProfile)"
+  source: "spec/07-api.md:§User Profile"
+  milestone: "M2"
+  lane: 6
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-022"
+  description: "Profile editor UI (S-PROFILE-1, S-PROFILE-2): goals editor, body metrics, dietary preferences + allergies, notification settings (per-slot meal reminder schedule), units/language selector, recalculate targets button with live preview"
+  source: "spec/04-screens.md:§S-PROFILE-1"
+  milestone: "M2"
+  lane: 6
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-023"
+  description: "Wire dashboard calorie ring and macro bars to user's personal DailyTargets; ring + bars show target-relative progress once onboarding is complete"
+  source: "spec/08-milestones.md:§Milestone 2"
+  milestone: "M2"
+  lane: 6
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-055"
+  description: "Account deletion: DELETE /api/v1/users/me (purges all user data + entries), 'Delete all data' and 'Account deletion' actions in S-PROFILE-3 with confirmation dialog; full S-PROFILE-3 screen (export + delete all data + account deletion + privacy policy link)"
+  source: "spec/04-screens.md:§S-PROFILE-3"
+  milestone: "M2"
+  lane: 6
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-058"
+  description: "Weekly check-in interactive flow (Flow 6): BullMQ weekly-summary job triggers notification → weigh-in prompt screen (current weight input, delta from last week displayed) → optional goal pace adjustment if off-track → lesson recommendation based on progress"
+  source: "spec/03-user-flows.md:§Flow 6"
+  milestone: "M2"
+  lane: 6
+  status: "pending"
+  test: null
+  commit: null
+
+# ── M2+: Weight & Activity ─────────────────────────────────────
+
+- id: "CHK-024"
+  description: "Weight logging API + UI: POST/PUT/DELETE /api/v1/logs/:date/weight, weight tile quick-log modal on dashboard"
+  source: "spec/07-api.md:§Meal Logging"
+  milestone: "M2"
+  lane: 7
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-025"
+  description: "Activity logging API + UI: POST/PUT/DELETE /api/v1/logs/:date/activities, exercise search GET /api/v1/exercises, activity log modal (search exercises, duration input, intensity selector, MET-based calorie estimate), activity tile on dashboard"
+  source: "spec/07-api.md:§Exercises"
+  milestone: "M2"
+  lane: 7
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-026"
+  description: "Exercise DB seed: 200+ activities with MET values across cardio, strength, flexibility, sports, daily_activity categories"
+  source: "spec/01-features.md:§F7"
+  milestone: "M2"
+  lane: 7
+  status: "pending"
+  test: null
+  commit: null
+
+# ── M3: AI Food Recognition ────────────────────────────────────
+
+- id: "CHK-027"
+  description: "MinIO service in Docker Compose + file upload API: POST /api/v1/photos/upload (multipart, temp bucket, returns objectKey)"
+  source: "spec/05-tech-stack.md:§Photo Recognition Flow"
+  milestone: "M3"
+  lane: 8
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-028"
+  description: "BullMQ analyze-photo job: enqueue on upload, status tracking via SSE endpoint GET /api/v1/photos/:jobId/status, returns [{name, weightG, confidence}]"
+  source: "spec/07-api.md:§Photo Recognition"
+  milestone: "M3"
+  lane: 8
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-029"
+  description: "Vision provider integrations: Ollama (LLaVA/moondream2, local) as Option A, OpenAI GPT-4o Vision as Option B, Gemini Flash (free tier) as Option C. VISION_PROVIDER=ollama|openai|gemini env switch. Structured output: JSON [{name, weightG, confidence}]."
+  source: "spec/05-tech-stack.md:§AI / Food Recognition"
+  milestone: "M3"
+  lane: 8
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-030"
+  description: "Photo capture UI (S-LOG-2) + recognition results screen (S-LOG-3): full-screen camera viewfinder, gallery picker, capture → loading state (SSE poll) → results list (editable name, editable weight spinner, live kcal preview, remove button), 'Add item manually' button, meal slot selector, confirm"
+  source: "spec/04-screens.md:§S-LOG-2"
+  milestone: "M3"
+  lane: 8
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-031"
+  description: "Voice input UI (S-LOG-8): Web Speech API, animated waveform, live transcription display, recognized item chips (editable), confirm flow → adds to selected meal slot"
+  source: "spec/04-screens.md:§S-LOG-8"
+  milestone: "M3"
+  lane: 8
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-056"
+  description: "Quick-add free-text NLP parsing: text input 'two eggs and oatmeal 80g', LLM/regex parse → bulk-populate food search suggestions with estimated weights, user confirms each item before adding to meal"
+  source: "spec/01-features.md:§F2.5"
+  milestone: "M3"
+  lane: 8
+  status: "pending"
+  test: null
+  commit: null
+
+# ── M4: Analytics ──────────────────────────────────────────────
+
+- id: "CHK-033"
+  description: "Analytics API: GET /api/v1/analytics/summary (calories/macros by date range), /nutrients (micro + macro vs RDA), /weight (daily entries + trend), /foods/top (most logged), /meals/timing (entries bucketed by hour-of-day)"
+  source: "spec/07-api.md:§Analytics"
+  milestone: "M4"
+  lane: 9
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-034"
+  description: "Analytics charts UI (S-PROGRESS-1): time range picker (7d/30d/3m/1y), calorie bar chart + target line, macro stacked area, weight scatter + trend line, nutrient coverage horizontal bars (vs RDA), water intake trend, meal timing heatmap (when in day user eats). Empty state when <3 days logged: 'Log for 3+ days to see trends' + Go to journal CTA."
+  source: "spec/04-screens.md:§S-PROGRESS-1"
+  milestone: "M4"
+  lane: 9
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-035"
+  description: "Streak calculation engine: rule = ≥1 food entry logged = streak day (no calorie-target pressure). Badge on dashboard header with bounce + subtle confetti on new streak day."
+  source: "spec/01-features.md:§F3"
+  milestone: "M4"
+  lane: 9
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-036"
+  description: "Data export API + UI: GET /api/v1/export/json, /csv — full user data. Export button on S-PROFILE-3."
+  source: "spec/07-api.md:§Data Export"
+  milestone: "M4"
+  lane: 9
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-054"
+  description: "Nutrient deep-dive screen (S-PROGRESS-2): nutrient selector (macro or micro), daily breakdown chart, top food sources for selected nutrient. Linked from nutrient coverage bars in S-PROGRESS-1."
+  source: "spec/04-screens.md:§S-PROGRESS-2"
+  milestone: "M4"
+  lane: 9
+  status: "pending"
+  test: null
+  commit: null
+
+# ── M5: Coach / Content ────────────────────────────────────────
+
+- id: "CHK-037"
+  description: "Lesson + LessonProgress Drizzle schema + migrations; lesson API: GET /api/v1/lessons (browse), /:id, /today (queue of 2-3), POST /:id/complete, GET /progress (by category)"
+  source: "spec/07-api.md:§Educational Content"
+  milestone: "M5"
+  lane: 10
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-038"
+  description: "Lesson seed data: 20+ open-licensed articles across all 6 categories: nutrition, sleep, stress, habits, fitness, mindfulness"
+  source: "spec/01-features.md:§F5"
+  milestone: "M5"
+  lane: 10
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-039"
+  description: "Coach home UI (S-COACH-1): today queue (2-3 cards), continue learning section, category browse (6 categories). Lesson detail (S-COACH-2): title, read time, cover illustration, markdown body render, mark complete button, related lessons. Empty state when all done: 'You've completed today's lessons. Come back tomorrow.' + Browse all CTA."
+  source: "spec/04-screens.md:§S-COACH-1"
+  milestone: "M5"
+  lane: 10
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-040"
+  description: "Recipe + RecipeIngredient Drizzle schema + migration; recipe API: GET /api/v1/recipes (browse + filter), /:id, POST (create), PUT /:id, DELETE /:id, POST /:id/favorite, DELETE /:id/favorite, POST /:id/log (creates MealEntries for all ingredients in selected meal slot)"
+  source: "spec/07-api.md:§Recipes"
+  milestone: "M5"
+  lane: 11
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-041"
+  description: "Recipe seed data: 30+ recipes with ingredients linked to food DB; macros per serving auto-calculated from RecipeIngredient weights"
+  source: "spec/01-features.md:§F6"
+  milestone: "M5"
+  lane: 11
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-042"
+  description: "Recipe browser UI (S-COACH-3): grid/list toggle, filter bar (diet type, prep time, calorie range), recipe cards. Recipe detail (S-COACH-4): hero image, macros per serving, serving selector (scales ingredients), ingredients list, step-by-step instructions, 'Log this meal' button → meal slot picker, favorite toggle, custom recipe builder (add food DB items as ingredients, auto-calculate macros). Empty state (no favorites): 'Save recipes you love here' + Browse recipes CTA."
+  source: "spec/04-screens.md:§S-COACH-3"
+  milestone: "M5"
+  lane: 11
+  status: "pending"
+  test: null
+  commit: null
+
+# ── M6: PWA & Polish ──────────────────────────────────────────
+
+- id: "CHK-043"
+  description: "Service worker (Workbox/next-pwa): offline read cache for dashboard + journal + recipes, install prompt (Add to Home Screen)"
+  source: "spec/08-milestones.md:§Milestone 6"
+  milestone: "M6"
+  lane: 12
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-044"
+  description: "Background sync + Dexie.js offline store: queue log entries while offline, sync to server on reconnect, offline indicator banner when no connection"
+  source: "spec/05-tech-stack.md:§Frontend"
+  milestone: "M6"
+  lane: 12
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-045"
+  description: "Push notifications: per-slot meal reminders (configurable schedule from CHK-022 settings), weekly check-in prompt"
+  source: "spec/08-milestones.md:§Milestone 6"
+  milestone: "M6"
+  lane: 12
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-057"
+  description: "Email jobs via Nodemailer + SMTP: BullMQ daily-reminder-email job (morning summary of yesterday + today goal) and weekly-summary-email job (weekly progress digest). Distinct from push notifications — email channel."
+  source: "spec/05-tech-stack.md:§Backend"
+  milestone: "M6"
+  lane: 12
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-046"
+  description: "Animations + transitions: page fade (150ms), list stagger-fade (30ms/item), calorie ring fill on mount (0→current, 600ms ease-out), number count animation on kcal updates after logging, toast slide-up (auto-dismiss 3s), bottom sheet spring (cubic-bezier(0.32,0.72,0,1)), milestone celebrations (streak record, goal reached — bounce + confetti). All wrapped in prefers-reduced-motion guard."
+  source: "spec/06-ux-design.md:§Motion & Transitions"
+  milestone: "M6"
+  lane: 13
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-047"
+  description: "Accessibility audit (WCAG AA): min 44×44px tap targets on all interactive elements, keyboard navigation + visible focus rings (2px primary), aria labels on all icon-only buttons, color contrast ≥4.5:1 text / ≥3:1 UI components, no information conveyed by color alone (always text/icon backup), screen reader testing"
+  source: "spec/06-ux-design.md:§Accessibility"
+  milestone: "M6"
+  lane: 13
+  status: "pending"
+  test: null
+  commit: null
+
+# ── M7: Self-Hosting & Docs ───────────────────────────────────
+
+- id: "CHK-048"
+  description: "Docker Compose production config: multi-stage Next.js build, non-root users, health checks for all services, environment variables documented in .env.example"
+  source: "spec/08-milestones.md:§Milestone 7"
+  milestone: "M7"
+  lane: 13
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-049"
+  description: "Project documentation: README with screenshots + quick-start, self-hosting guide (Docker Compose setup, env vars, first run), contributing guide"
+  source: "spec/08-milestones.md:§Milestone 7"
+  milestone: "M7"
+  lane: 13
+  status: "pending"
+  test: null
+  commit: null
+
+- id: "CHK-059"
+  description: "OpenAPI spec auto-generation: wire Hono + Zod schema types to @hono/zod-openapi, serve GET /api/openapi.json and Swagger UI at /api/docs"
+  source: "spec/05-tech-stack.md:§Developer Experience"
+  milestone: "M7"
+  lane: 13
+  status: "pending"
+  test: null
+  commit: null

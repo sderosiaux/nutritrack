@@ -146,14 +146,9 @@ Admin can configure which provider to use via env var: `VISION_PROVIDER=ollama|o
 
 ---
 
-## Deployment Targets
+## Deployment Target
 
-| Target | Method |
-|---|---|
-| Self-hosted VPS | Docker Compose |
-| Railway / Render | Dockerfile (one-click templates planned) |
-| Fly.io | fly.toml (multi-region optional) |
-| Vercel + Neon + Upstash | Serverless (no Ollama, use cloud vision) |
+Self-hosted VPS or local machine via Docker Compose. No cloud deployment targets.
 
 ---
 
