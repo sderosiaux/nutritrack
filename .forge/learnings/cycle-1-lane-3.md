@@ -46,6 +46,15 @@
 
 - Full-text search GIN index not added to DB migration — FTS query works without it but will be slow at scale. Index needed for production. Add to polish lane or lane 4.
 
+## RETRY FIXES (attempt 10 — reviewer violations fixed)
+
+### CHK-009 + CHK-051: Static import + vi.resetAllMocks() pattern
+- Violation: tests used `vi.resetModules()` in `beforeEach` + dynamic `import()` per test. This is unreliable: mock return queues can leak across tests even with `vi.clearAllMocks()` (which clears call history but NOT `mockReturnValueOnce` queues).
+- Root cause: test 6 ("empty results") sets up 3 `db.select` mock returns but only consumes 2. `loadServingSizes` exits early when `foodIds.length === 0`. The 3rd mock leaks into test 7+, causing them to receive wrong data.
+- Fix: (1) Module-level `vi.mock()` + static `import` (same as `chk009-rank.test.ts` pattern). (2) Use `vi.resetAllMocks()` in `beforeEach` (not `clearAllMocks`) to flush mock queues. (3) Don't set up mock returns for DB calls that won't happen (e.g., no 3rd `db.select` mock when `foodIds.length === 0`).
+- Key insight: `vi.clearAllMocks()` ≠ `vi.resetAllMocks()`. The former clears call history only; the latter also clears `mockReturnValueOnce` queues. Use `resetAllMocks()` whenever tests set up per-test return values.
+  (`src/__tests__/chk009-search-service.test.ts`, `src/__tests__/chk051-ownership.test.ts`)
+
 ## RETRY FIXES (attempt 5)
 
 ### CHK-008: Seed ~10k foods

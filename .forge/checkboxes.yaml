@@ -102,7 +102,7 @@
   milestone: "M1"
   lane: 3
   status: "DONE"
-  test: "src/__tests__/chk009-rank.test.ts:35"
+  test: "src/__tests__/chk009-search-service.test.ts:80"
   commit: "f5468fe"
 
 - id: "CHK-010"
@@ -129,7 +129,7 @@
   milestone: "M1"
   lane: 3
   status: "DONE"
-  test: "src/__tests__/chk051-custom-food.test.ts:51"
+  test: "src/__tests__/chk051-ownership.test.ts:84"
   commit: "172a426"
 
 - id: "CHK-012"
