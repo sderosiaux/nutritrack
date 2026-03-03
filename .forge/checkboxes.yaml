@@ -93,8 +93,8 @@
   milestone: "M1"
   lane: 3
   status: "DONE"
-  test: "src/__tests__/chk008-seed.test.ts:34"
-  commit: "172a426"
+  test: "src/__tests__/chk008-seed.test.ts:47"
+  commit: "f5468fe"
 
 - id: "CHK-009"
   description: "Food search API: GET /api/v1/foods/search with PostgreSQL full-text search, fuzzy ranking (recent > exact > verified > branded), multi-language via nameTranslations JSONB, pagination"
@@ -103,7 +103,7 @@
   lane: 3
   status: "DONE"
   test: "src/__tests__/chk009-rank.test.ts:35"
-  commit: "172a426"
+  commit: "f5468fe"
 
 - id: "CHK-010"
   description: "Food detail, recent, favorites API: GET /api/v1/foods/:id, /recent, /favorites, POST/DELETE /favorites/:foodId"
