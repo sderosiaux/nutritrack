@@ -45,3 +45,10 @@
 - `Dockerfile.dev` installs pnpm via npm on each build. Acceptable for dev; prod multi-stage build in lane 13 (CHK-048).
 
 - `src/server/db/seed.ts` is a stub — actual food seeding is in lane 3.
+
+## REVIEW LESSONS (attempt 2→3)
+
+- Reviewer checks test substance, not just presence. "Dependency-presence checks" are insufficient — must assert runtime behavior (file structure, handler wiring, API responses, middleware contracts).
+- Separate test files per CHK-ID (chk002-compose.test.ts, not bundled into chk001). Reviewer catches wrong file references immediately.
+- Migration artifacts are code artifacts — they must be committed. `drizzle-kit generate` output belongs in the repo, not gitignored.
+- Auth middleware tests must exercise the actual enforce/allow contract (401 on no session, 200 on valid session), not just config inspection.
