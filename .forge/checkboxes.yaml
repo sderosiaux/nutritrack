@@ -47,7 +47,7 @@
   lane: 2
   status: "DONE"
   test: "src/__tests__/chk005-design-system.test.tsx:28"
-  commit: "0ec1ee4"
+  commit: "36a9554"
 
 - id: "CHK-006"
   description: "App shell: responsive layout — bottom tab bar 5 items (mobile), collapsible left sidebar (tablet/desktop), global FAB '+' button, routing structure, layout breakpoints (mobile <640px / tablet 640-1024px / desktop >1024px)"
@@ -73,8 +73,8 @@
   milestone: "M0"
   lane: 2
   status: "DONE"
-  test: "src/__tests__/chk050-client-setup.test.tsx:17"
-  commit: "0ec1ee4"
+  test: "src/__tests__/chk050-client-setup.test.tsx:149"
+  commit: "36a9554"
 
 - id: "CHK-053"
   description: "Guest mode: 'Continue as Guest' flow from S-AUTH-1, IndexedDB-first data path via Dexie.js for all meal/water/weight entries, persistent non-intrusive 'Back up your data →' banner (no forced signup prompts), guest-to-account upgrade with data migration"
@@ -82,8 +82,8 @@
   milestone: "M0"
   lane: 2
   status: "DONE"
-  test: "src/__tests__/chk053-guest-mode.test.tsx:25"
-  commit: "0ec1ee4"
+  test: "src/__tests__/chk053-guest-mode.test.tsx:223"
+  commit: "36a9554"
 
 # ── M1: Core Log Loop ──────────────────────────────────────────
 
