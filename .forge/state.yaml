@@ -1,8 +1,8 @@
 cycle: 1
 phase: review
 max_cycles: 3
-current_lane: 1
-lane_attempt: 6
+current_lane: 2
+lane_attempt: 1
 max_lane_attempts: 10
 spec_path: ''
 lanes_file: .forge/lanes.yaml
@@ -11,7 +11,8 @@ preserve_paths: []
 implement_session_id: ''
 resume_sessions: true
 reviewer: codex
-lane_base_sha: 13d4882f4293ed8321915a8c3a840123c1fbecc4
+lane_base_sha: 49930ad8b45a65555fd609ce80dffe6479de5772
 no_change_streak: 0
 total_cost_usd: 0.0
-lane_costs: {}
+lane_costs:
+  1: 0.0
