@@ -37,7 +37,7 @@
   milestone: "M0"
   lane: 1
   status: "DONE"
-  test: "src/__tests__/chk004-auth.test.ts:85"
+  test: "src/__tests__/chk004-auth.test.ts:117"
   commit: "9dd81ef"
 
 - id: "CHK-005"

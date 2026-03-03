@@ -4,8 +4,16 @@
  *
  * Tests verify:
  *  1. Auth module configuration (emailAndPassword, bearer plugin)
- *  2. Concrete spec route paths exist and are wired to auth.handler
+ *  2. Each spec route path has a dedicated file that rewrites to Better Auth's internal path
  *  3. JWT session middleware enforcement (401/200 contract)
+ *
+ * Spec paths → Better Auth internal paths:
+ *   /api/auth/register        → /api/auth/sign-up/email
+ *   /api/auth/login           → /api/auth/sign-in/email
+ *   /api/auth/logout          → /api/auth/sign-out
+ *   /api/auth/refresh         → /api/auth/refresh-token
+ *   /api/auth/forgot-password → /api/auth/forget-password
+ *   /api/auth/reset-password  → /api/auth/reset-password  (same)
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { existsSync } from "fs";
@@ -71,67 +79,130 @@ describe("CHK-004: Auth module configuration", () => {
   });
 });
 
-describe("CHK-004: Spec route path existence and wiring", () => {
-  it("POST /api/auth/register — route file exists (catch-all handler)", () => {
-    const routePath = join(root, "src/app/api/auth/[...all]/route.ts");
-    expect(existsSync(routePath)).toBe(true);
+describe("CHK-004: Spec route files exist with dedicated adapters", () => {
+  it("POST /api/auth/register — dedicated route file exists", () => {
+    expect(existsSync(join(root, "src/app/api/auth/register/route.ts"))).toBe(true);
   });
 
-  it("POST /api/auth/login — served by catch-all auth handler", async () => {
-    const route = await import("@/app/api/auth/[...all]/route");
-    expect(typeof route.POST).toBe("function");
+  it("POST /api/auth/login — dedicated route file exists", () => {
+    expect(existsSync(join(root, "src/app/api/auth/login/route.ts"))).toBe(true);
   });
 
-  it("POST /api/auth/logout — served by catch-all auth handler", async () => {
-    const route = await import("@/app/api/auth/[...all]/route");
-    expect(typeof route.POST).toBe("function");
+  it("POST /api/auth/logout — dedicated route file exists", () => {
+    expect(existsSync(join(root, "src/app/api/auth/logout/route.ts"))).toBe(true);
   });
 
-  it("POST /api/auth/forgot-password — served by catch-all auth handler", async () => {
-    const route = await import("@/app/api/auth/[...all]/route");
-    expect(typeof route.POST).toBe("function");
+  it("POST /api/auth/refresh — dedicated route file exists", () => {
+    expect(existsSync(join(root, "src/app/api/auth/refresh/route.ts"))).toBe(true);
   });
 
-  it("POST /api/auth/reset-password — served by catch-all auth handler", async () => {
-    const route = await import("@/app/api/auth/[...all]/route");
-    expect(typeof route.POST).toBe("function");
+  it("POST /api/auth/forgot-password — dedicated route file exists", () => {
+    expect(existsSync(join(root, "src/app/api/auth/forgot-password/route.ts"))).toBe(true);
   });
 
-  it("POST /api/auth/refresh — dedicated route file exists at spec path", () => {
-    // Spec: POST /api/auth/refresh (spec/07-api.md:20)
-    // Better Auth's internal endpoint is /api/auth/refresh-token.
-    // A dedicated route at this path proxies to the internal endpoint.
-    const routePath = join(root, "src/app/api/auth/refresh/route.ts");
-    expect(existsSync(routePath)).toBe(true);
+  it("POST /api/auth/reset-password — dedicated route file exists", () => {
+    expect(existsSync(join(root, "src/app/api/auth/reset-password/route.ts"))).toBe(true);
   });
 
-  it("POST /api/auth/refresh — route exports a POST handler function", async () => {
-    const route = await import("@/app/api/auth/refresh/route");
-    expect(typeof route.POST).toBe("function");
+  it("GET /api/auth/[...all] catch-all handles Better Auth internal paths (session, etc.)", () => {
+    expect(existsSync(join(root, "src/app/api/auth/[...all]/route.ts"))).toBe(true);
+  });
+});
+
+describe("CHK-004: Spec path → Better Auth internal path mapping", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it("POST /api/auth/refresh — handler calls auth.handler with refresh-token path", async () => {
+  it("POST /api/auth/register maps to /api/auth/sign-up/email", async () => {
     const { auth } = await import("@/server/auth");
-    const handlerSpy = auth.handler as ReturnType<typeof vi.fn>;
-    handlerSpy.mockClear();
+    const spy = auth.handler as ReturnType<typeof vi.fn>;
+
+    const { POST } = await import("@/app/api/auth/register/route");
+    await POST(new Request("http://localhost/api/auth/register", { method: "POST" }));
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(new URL((spy.mock.calls[0][0] as Request).url).pathname).toBe("/api/auth/sign-up/email");
+  });
+
+  it("POST /api/auth/login maps to /api/auth/sign-in/email", async () => {
+    const { auth } = await import("@/server/auth");
+    const spy = auth.handler as ReturnType<typeof vi.fn>;
+
+    const { POST } = await import("@/app/api/auth/login/route");
+    await POST(new Request("http://localhost/api/auth/login", { method: "POST" }));
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(new URL((spy.mock.calls[0][0] as Request).url).pathname).toBe("/api/auth/sign-in/email");
+  });
+
+  it("POST /api/auth/logout maps to /api/auth/sign-out", async () => {
+    const { auth } = await import("@/server/auth");
+    const spy = auth.handler as ReturnType<typeof vi.fn>;
+
+    const { POST } = await import("@/app/api/auth/logout/route");
+    await POST(new Request("http://localhost/api/auth/logout", { method: "POST" }));
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(new URL((spy.mock.calls[0][0] as Request).url).pathname).toBe("/api/auth/sign-out");
+  });
+
+  it("POST /api/auth/refresh maps to /api/auth/refresh-token", async () => {
+    const { auth } = await import("@/server/auth");
+    const spy = auth.handler as ReturnType<typeof vi.fn>;
 
     const { POST } = await import("@/app/api/auth/refresh/route");
+    await POST(new Request("http://localhost/api/auth/refresh", { method: "POST" }));
 
-    const req = new Request("http://localhost/api/auth/refresh", { method: "POST" });
-    await POST(req);
-
-    expect(handlerSpy).toHaveBeenCalledOnce();
-    const calledWith = handlerSpy.mock.calls[0][0] as Request;
-    expect(new URL(calledWith.url).pathname).toBe("/api/auth/refresh-token");
+    expect(spy).toHaveBeenCalledOnce();
+    expect(new URL((spy.mock.calls[0][0] as Request).url).pathname).toBe("/api/auth/refresh-token");
   });
 
-  it("GET /api/auth/[...all] catch-all also handles GET requests (session check, etc.)", async () => {
-    const route = await import("@/app/api/auth/[...all]/route");
-    expect(typeof route.GET).toBe("function");
+  it("POST /api/auth/forgot-password maps to /api/auth/forget-password", async () => {
+    const { auth } = await import("@/server/auth");
+    const spy = auth.handler as ReturnType<typeof vi.fn>;
+
+    const { POST } = await import("@/app/api/auth/forgot-password/route");
+    await POST(new Request("http://localhost/api/auth/forgot-password", { method: "POST" }));
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(new URL((spy.mock.calls[0][0] as Request).url).pathname).toBe("/api/auth/forget-password");
+  });
+
+  it("POST /api/auth/reset-password maps to /api/auth/reset-password", async () => {
+    const { auth } = await import("@/server/auth");
+    const spy = auth.handler as ReturnType<typeof vi.fn>;
+
+    const { POST } = await import("@/app/api/auth/reset-password/route");
+    await POST(new Request("http://localhost/api/auth/reset-password", { method: "POST" }));
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(new URL((spy.mock.calls[0][0] as Request).url).pathname).toBe("/api/auth/reset-password");
+  });
+
+  it("all spec route handlers export POST function", async () => {
+    const [register, login, logout, refresh, forgot, reset] = await Promise.all([
+      import("@/app/api/auth/register/route"),
+      import("@/app/api/auth/login/route"),
+      import("@/app/api/auth/logout/route"),
+      import("@/app/api/auth/refresh/route"),
+      import("@/app/api/auth/forgot-password/route"),
+      import("@/app/api/auth/reset-password/route"),
+    ]);
+    expect(typeof register.POST).toBe("function");
+    expect(typeof login.POST).toBe("function");
+    expect(typeof logout.POST).toBe("function");
+    expect(typeof refresh.POST).toBe("function");
+    expect(typeof forgot.POST).toBe("function");
+    expect(typeof reset.POST).toBe("function");
   });
 });
 
 describe("CHK-004: JWT session middleware enforcement", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("getSessionFromRequest is exported as a function", async () => {
     const { getSessionFromRequest } = await import("@/server/auth");
     expect(typeof getSessionFromRequest).toBe("function");

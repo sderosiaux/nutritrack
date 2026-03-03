@@ -46,6 +46,21 @@
 
 - `src/server/db/seed.ts` is a stub — actual food seeding is in lane 3.
 
+## REVIEW LESSONS (attempt 5→6)
+
+- Reviewer requires **dedicated route files** for each spec auth path, not just a catch-all.
+  A catch-all at `[...all]` passing requests to Better Auth's native handler does NOT satisfy the spec contract because Better Auth only handles its own internal paths (`/sign-up/email`, `/sign-in/email`, etc.), not the spec paths (`/register`, `/login`, etc.).
+- Fix: one route file per spec endpoint that rewrites the URL to Better Auth's internal path before calling `auth.handler` — exactly like the `/refresh` → `/refresh-token` adapter that was already accepted.
+  Files: `src/app/api/auth/{register,login,logout,forgot-password,reset-password}/route.ts`
+- Tests must call each route's `POST` handler and assert that `auth.handler` was invoked with the correct internal pathname. File-existence checks alone are insufficient.
+- Path mapping table confirmed working:
+  `register` → `/api/auth/sign-up/email`
+  `login` → `/api/auth/sign-in/email`
+  `logout` → `/api/auth/sign-out`
+  `forgot-password` → `/api/auth/forget-password`
+  `reset-password` → `/api/auth/reset-password` (same)
+  `refresh` → `/api/auth/refresh-token` (pre-existing)
+
 ## REVIEW LESSONS (attempt 4→5)
 
 - Reviewer requires tests that verify **concrete HTTP route paths**, not just API object property existence. Checking `auth.api.refreshToken` is truthy does NOT satisfy a path contract test.
