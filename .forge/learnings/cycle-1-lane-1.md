@@ -46,6 +46,11 @@
 
 - `src/server/db/seed.ts` is a stub — actual food seeding is in lane 3.
 
+## REVIEW LESSONS (attempt 3→4)
+
+- Reviewer checks every spec verb. "refresh" in CHK-004 maps to `auth.api.refreshToken` (Better Auth's `/api/auth/refresh-token`). Must assert it explicitly — session config `updateAge` alone does not satisfy the test gap.
+- Better Auth `auth.api.refreshToken` exists in core (no plugin needed). Confirmed by inspecting live `auth.api` keys.
+
 ## REVIEW LESSONS (attempt 2→3)
 
 - Reviewer checks test substance, not just presence. "Dependency-presence checks" are insufficient — must assert runtime behavior (file structure, handler wiring, API responses, middleware contracts).

@@ -90,6 +90,14 @@ describe("CHK-004: Auth API endpoint contract", () => {
     expect(auth.api).toHaveProperty("getSession");
     expect(typeof (auth.api as Record<string, unknown>).getSession).toBe("function");
   });
+
+  it("auth.api exposes refreshToken endpoint (session refresh / token renewal)", async () => {
+    const { auth } = await import("@/server/auth");
+    // Better Auth exposes refreshToken at POST /api/auth/refresh-token
+    // Satisfies spec CHK-004 "refresh" requirement
+    expect(auth.api).toHaveProperty("refreshToken");
+    expect(typeof (auth.api as Record<string, unknown>).refreshToken).toBe("function");
+  });
 });
 
 describe("CHK-004: Next.js route wiring", () => {
