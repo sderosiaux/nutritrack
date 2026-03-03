@@ -64,12 +64,13 @@ describe("CHK-003: Drizzle schema exports", () => {
 
   describe("Food schema correctness", () => {
     it("foods table has JSONB nameTranslations column", () => {
-      const cols = schema.foods as Record<string, unknown>;
-      expect(cols).toHaveProperty("nameTranslations");
+      // Verify JSONB type — not just presence. Prevents silent regression to text/json.
+      const col = schema.foods.nameTranslations as unknown as { getSQLType?: () => string };
+      expect(col.getSQLType?.(), "nameTranslations must be jsonb, not text/varchar/json").toBe("jsonb");
     });
     it("foods table has JSONB micronutrients column", () => {
-      const cols = schema.foods as Record<string, unknown>;
-      expect(cols).toHaveProperty("micronutrients");
+      const col = schema.foods.micronutrients as unknown as { getSQLType?: () => string };
+      expect(col.getSQLType?.(), "micronutrients must be jsonb, not text/varchar/json").toBe("jsonb");
     });
     it("foods table has source enum column", () => {
       const cols = schema.foods as Record<string, unknown>;
@@ -146,5 +147,20 @@ describe("CHK-003: Migration artifacts", () => {
       .sort();
     const initial = readFileSync(join(migrationsDir, sqlFiles[0]!), "utf-8");
     expect(initial).toMatch(/CREATE TABLE[^;]*"favorite_recipes"/i);
+  });
+
+  it("foods.name_translations column is jsonb type in migration SQL", () => {
+    const migrationsDir = join(root, "drizzle/migrations");
+    const sqlFiles = readdirSync(migrationsDir).filter((f) => f.endsWith(".sql")).sort();
+    const sql = readFileSync(join(migrationsDir, sqlFiles[0]!), "utf-8");
+    // Must be jsonb, not text/varchar/json — prevents silent type regression
+    expect(sql).toMatch(/"name_translations"\s+jsonb/);
+  });
+
+  it("foods.micronutrients column is jsonb type in migration SQL", () => {
+    const migrationsDir = join(root, "drizzle/migrations");
+    const sqlFiles = readdirSync(migrationsDir).filter((f) => f.endsWith(".sql")).sort();
+    const sql = readFileSync(join(migrationsDir, sqlFiles[0]!), "utf-8");
+    expect(sql).toMatch(/"micronutrients"\s+jsonb/);
   });
 });

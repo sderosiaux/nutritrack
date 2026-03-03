@@ -16,7 +16,7 @@
  *   /api/auth/reset-password  → /api/auth/reset-password  (same)
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 
 const root = join(__dirname, "../../");
@@ -61,21 +61,22 @@ describe("CHK-004: Auth module configuration", () => {
     expect(typeof auth.handler).toBe("function");
   });
 
-  it("emailAndPassword provider is enabled", async () => {
-    const { auth } = await import("@/server/auth");
-    const options = (auth as { options?: { emailAndPassword?: { enabled?: boolean } } }).options;
-    expect(options?.emailAndPassword?.enabled).toBe(true);
+  it("emailAndPassword is enabled in real auth source (not mock-fabricated)", () => {
+    // Reads actual source — mock.options can't satisfy this. Prevents silent regression.
+    const source = readFileSync(join(root, "src/server/auth/index.ts"), "utf-8");
+    expect(
+      source,
+      "emailAndPassword.enabled must be true in src/server/auth/index.ts"
+    ).toMatch(/emailAndPassword\s*:\s*\{[^}]*enabled\s*:\s*true/s);
   });
 
-  it("bearer plugin is configured for JWT Authorization: Bearer <token> header", async () => {
-    const { auth } = await import("@/server/auth");
-    const options = (auth as { options?: { plugins?: Array<{ id: string }> } }).options;
-    const plugins = options?.plugins ?? [];
-    const hasBearerPlugin = plugins.some((p) => p.id === "bearer");
+  it("bearer plugin is present in real auth source (not mock-fabricated)", () => {
+    const source = readFileSync(join(root, "src/server/auth/index.ts"), "utf-8");
     expect(
-      hasBearerPlugin,
-      "bearer plugin not found — add bearer() to plugins array in src/server/auth/index.ts"
-    ).toBe(true);
+      source,
+      "bearer() must be in the plugins array in src/server/auth/index.ts"
+    ).toContain("bearer()");
+    expect(source).toMatch(/plugins\s*:\s*\[/);
   });
 });
 

@@ -56,6 +56,16 @@
 
 - `src/server/db/seed.ts` is a stub — actual food seeding is in lane 3.
 
+## REVIEW LESSONS (attempt 6→7, retry 2)
+
+- Reviewer flags **test precision for column types**: `toHaveProperty("nameTranslations")` only asserts key existence — it cannot detect type regression (e.g. `text()` instead of `jsonb()`).
+  Fix: call `col.getSQLType()` on Drizzle column objects — returns `"jsonb"` for `jsonb()` columns (`chk003-schema.test.ts:67`). Also verify migration SQL directly with `/"name_translations"\s+jsonb/` regex.
+
+- Reviewer flags **mock-contaminated config assertions**: when `vi.mock("@/server/auth")` defines `auth.options = { emailAndPassword: { enabled: true }, plugins: [...] }`, any test that reads `auth.options` is testing the mock, not the real source. Zero regression protection.
+  Fix: use `readFileSync(join(root, "src/server/auth/index.ts"))` + regex/string assertions on the actual source content. This cannot be satisfied by mock values (`chk004-auth.test.ts:64,73`).
+
+- **Rule**: If a test's assertion can pass trivially because the mock already supplies the expected value, the test is redundant. Always ask: "Would this test catch a regression in the real source?"
+
 ## REVIEW LESSONS (attempt 5→6)
 
 - Reviewer requires **dedicated route files** for each spec auth path, not just a catch-all.
