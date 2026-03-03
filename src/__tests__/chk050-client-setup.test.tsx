@@ -6,6 +6,14 @@ import { createQueryClient, createOptimisticMutation } from "@/lib/query-client"
 import { useUIStore } from "@/lib/stores/ui-store";
 import { useGuestStore } from "@/lib/stores/guest-store";
 import { QueryProvider } from "@/components/providers/query-provider";
+import {
+  emailSchema,
+  passwordSchema,
+  loginFormSchema,
+  registerFormSchema,
+  firstError,
+  zodResolver,
+} from "@/lib/forms";
 
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
@@ -135,5 +143,62 @@ describe("CHK-050: QueryProvider component", () => {
       </QueryProvider>
     );
     expect(screen.getByTestId("child")).toBeDefined();
+  });
+});
+
+describe("CHK-050: RHF + Zod validation utilities (src/lib/forms.ts)", () => {
+  it("emailSchema rejects invalid email", () => {
+    expect(emailSchema.safeParse("not-an-email").success).toBe(false);
+  });
+
+  it("emailSchema accepts valid email", () => {
+    expect(emailSchema.safeParse("user@example.com").success).toBe(true);
+  });
+
+  it("passwordSchema rejects password shorter than 8 chars", () => {
+    expect(passwordSchema.safeParse("abc123").success).toBe(false);
+  });
+
+  it("passwordSchema accepts password of 8+ chars", () => {
+    expect(passwordSchema.safeParse("secure99").success).toBe(true);
+  });
+
+  it("loginFormSchema validates correct email+password", () => {
+    expect(
+      loginFormSchema.safeParse({ email: "test@example.com", password: "password1" }).success
+    ).toBe(true);
+  });
+
+  it("loginFormSchema rejects missing password", () => {
+    expect(loginFormSchema.safeParse({ email: "test@example.com" }).success).toBe(false);
+  });
+
+  it("registerFormSchema requires name field", () => {
+    expect(
+      registerFormSchema.safeParse({ name: "", email: "a@b.com", password: "password1" }).success
+    ).toBe(false);
+  });
+
+  it("registerFormSchema accepts valid name+email+password", () => {
+    expect(
+      registerFormSchema.safeParse({ name: "Alice", email: "a@b.com", password: "password1" }).success
+    ).toBe(true);
+  });
+
+  it("firstError returns first error message from field map", () => {
+    const errors = {
+      email: { message: "Invalid email" },
+      password: undefined,
+    };
+    expect(firstError(errors)).toBe("Invalid email");
+  });
+
+  it("firstError returns undefined when no errors", () => {
+    expect(firstError({})).toBeUndefined();
+  });
+
+  it("zodResolver is exported and callable", () => {
+    const resolver = zodResolver(loginFormSchema);
+    expect(typeof resolver).toBe("function");
   });
 });

@@ -68,6 +68,20 @@ describe("CHK-005: Design System Tokens", () => {
     expect(css).toContain("--color-rose: #f43f5e");
   });
 
+  it("defines 4px spacing scale: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64", () => {
+    // spec/06-ux-design.md §Spacing: "4px base unit. Scale: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64"
+    expect(css).toContain("--spacing-1: 4px");
+    expect(css).toContain("--spacing-2: 8px");
+    expect(css).toContain("--spacing-3: 12px");
+    expect(css).toContain("--spacing-4: 16px");
+    expect(css).toContain("--spacing-5: 20px");
+    expect(css).toContain("--spacing-6: 24px");
+    expect(css).toContain("--spacing-8: 32px");
+    expect(css).toContain("--spacing-10: 40px");
+    expect(css).toContain("--spacing-12: 48px");
+    expect(css).toContain("--spacing-16: 64px");
+  });
+
   it("does NOT define traffic-light food classification tokens", () => {
     // Spec: NO traffic-light food classification (spec/06-ux-design.md)
     expect(css).not.toContain("--color-food-green");

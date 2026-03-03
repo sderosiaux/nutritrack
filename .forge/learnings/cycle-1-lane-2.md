@@ -48,7 +48,7 @@
 
 - Stub page components (`/today`, `/journal`, etc.) will be replaced in lanes 5-9. They exist now only to verify routing works end-to-end.
 
-## RETRY FIXES (attempt 2)
+## RETRY FIXES (attempt 2 — initial)
 
 - **Breakpoint bug**: Original code used `md:` (768px) instead of spec's `sm:` (640px). Tailwind `md` = 768px but spec says tablet starts at 640px. Fix: `hidden sm:flex` for sidebar, `sm:hidden` for bottom-nav. (`sidebar.tsx:33`, `bottom-nav.tsx:22`)
 
@@ -61,3 +61,15 @@
 - **Shared Dexie DB across tests**: `new NutriDB()` always opens the same "NutriTrack" database in fake-indexeddb. Entries accumulate across tests in the same run. Fix: call `db.mealEntries.clear()` etc. at test start, or use unique DB names per test suite.
 
 - **Multiple aria-label "Main navigation"**: Both Sidebar `<nav>` and BottomNav `<nav>` share the same aria-label. When testing AppLayout (which renders both), `getByLabelText("Main navigation")` throws "multiple elements found". Fix: use `getAllByLabelText` and assert count, or use the unique `<aside aria-label="Sidebar navigation">` for the sidebar.
+
+## RETRY FIXES (attempt 3 — reviewer violations)
+
+- **CHK-005 spacing tokens missing**: `globals.css` had no explicit `--spacing-N` CSS tokens. Reviewer expected the 4px scale from `spec/06-ux-design.md §Spacing` to be tokenized. Fix: added `--spacing-1..16` to `@theme {}` in `globals.css:48-57`. Test: `chk005-design-system.test.tsx` new assertion at line ~69.
+
+- **CHK-050 no shared validation utilities**: Inline Zod schemas in page components not sufficient. Reviewer requires importable `src/lib/forms.ts` exporting `emailSchema`, `passwordSchema`, `loginFormSchema`, `registerFormSchema`, `firstError`, `zodResolver`. Both `login/page.tsx` and `register/page.tsx` now import from shared lib. Test: `chk050-client-setup.test.tsx` new describe block (~11 assertions).
+
+- **CHK-053 no IndexedDB-first data routing**: `getOfflineDB()` was only called in migration/upgrade, not in any user-facing logging path. Fix: created `src/lib/guest/guest-log.ts` with `addGuestMealEntry/addGuestWaterEntry/addGuestWeightEntry` (optional `db` param for testability). Created `src/lib/hooks/use-log-entry.ts` routing hook. Wired hook into `src/components/shell/fab.tsx` (the global logging entry point). Tests in `chk053-guest-mode.test.tsx`: new "IndexedDB-first data path" describe (6 assertions) + "S-AUTH-1 Continue-as-Guest click flow" describe (2 assertions).
+
+- **Pattern: optional db param for testability**: `addGuestMealEntry(entry, db = getOfflineDB())` — use this pattern for any function that writes to Dexie. Tests pass `new NutriDB()` instance; production uses the singleton.
+
+- **Edit tool constraint**: Tool requires the file to be read in the current *session message context*, even if read in an earlier turn. Always re-read before editing if the session has continued far from the initial read.

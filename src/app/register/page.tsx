@@ -1,16 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { emailSchema, passwordSchema, zodResolver } from "@/lib/forms";
 import { upgradeGuestAccount } from "@/lib/guest/upgrade";
 
 const registerSchema = z.object({
-  email: z.string().email("Invalid email"),
-  password: z.string().min(8, "Min 8 characters"),
+  email: emailSchema,
+  password: passwordSchema,
   confirmPassword: z.string(),
 }).refine((d) => d.password === d.confirmPassword, {
   message: "Passwords do not match",

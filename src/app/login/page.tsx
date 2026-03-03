@@ -2,26 +2,18 @@
 
 import Link from "next/link";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-const loginSchema = z.object({
-  email: z.string().email("Invalid email"),
-  password: z.string().min(8, "Min 8 characters"),
-});
-
-type LoginInput = z.infer<typeof loginSchema>;
+import { loginFormSchema, zodResolver, type LoginFormValues } from "@/lib/forms";
 
 export default function LoginPage() {
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) });
+  } = useForm<LoginFormValues>({ resolver: zodResolver(loginFormSchema) });
 
-  async function onSubmit(data: LoginInput) {
+  async function onSubmit(data: LoginFormValues) {
     const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
