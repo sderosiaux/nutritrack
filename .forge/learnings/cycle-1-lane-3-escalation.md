@@ -4,8 +4,7 @@ Lane failed after 10 review attempts.
 
 ## Recurring violations
 
-- CHK-009: Required search semantics are not behavior-verified by tests.
-- CHK-051: "Own foods only" authorization behavior is not directly verified by tests.
+- CHK-009: Test behavior does not fully verify spec-required query semantics.
 
 ## Action for next attempt
 
