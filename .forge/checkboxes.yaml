@@ -47,7 +47,7 @@
   lane: 2
   status: "DONE"
   test: "src/__tests__/chk005-design-system.test.tsx:28"
-  commit: "34cccb6"
+  commit: "0ec1ee4"
 
 - id: "CHK-006"
   description: "App shell: responsive layout — bottom tab bar 5 items (mobile), collapsible left sidebar (tablet/desktop), global FAB '+' button, routing structure, layout breakpoints (mobile <640px / tablet 640-1024px / desktop >1024px)"
@@ -56,7 +56,7 @@
   lane: 2
   status: "DONE"
   test: "src/__tests__/chk006-app-shell.test.tsx:28"
-  commit: "34cccb6"
+  commit: "0ec1ee4"
 
 - id: "CHK-007"
   description: "Auth screens: Landing/Welcome (S-AUTH-1) with 'Get Started', 'Sign In', 'Continue as Guest' options; Login (S-AUTH-4) with email/password + forgot password; account creation form"
@@ -65,7 +65,7 @@
   lane: 2
   status: "DONE"
   test: "src/__tests__/chk007-auth-screens.test.tsx:20"
-  commit: "d5ac5a5"
+  commit: "0ec1ee4"
 
 - id: "CHK-050"
   description: "Client library setup: Zustand store scaffold, TanStack Query provider + query client config with optimistic mutation helpers (log entries appear instantly, rollback on error), React Hook Form + Zod validation utilities"
@@ -74,7 +74,7 @@
   lane: 2
   status: "DONE"
   test: "src/__tests__/chk050-client-setup.test.tsx:17"
-  commit: "d5ac5a5"
+  commit: "0ec1ee4"
 
 - id: "CHK-053"
   description: "Guest mode: 'Continue as Guest' flow from S-AUTH-1, IndexedDB-first data path via Dexie.js for all meal/water/weight entries, persistent non-intrusive 'Back up your data →' banner (no forced signup prompts), guest-to-account upgrade with data migration"
@@ -83,7 +83,7 @@
   lane: 2
   status: "DONE"
   test: "src/__tests__/chk053-guest-mode.test.tsx:25"
-  commit: "34cccb6"
+  commit: "0ec1ee4"
 
 # ── M1: Core Log Loop ──────────────────────────────────────────
 
