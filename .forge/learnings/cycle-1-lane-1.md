@@ -10,6 +10,12 @@
 
 - (Attempt 2) Reviewer expected explicit JWT bearer token plugin, not just session cookies. Added `bearer()` plugin from `better-auth/plugins` (`src/server/auth/index.ts:2,46`).
 
+- (Post-escalation) `pnpm build` failed because `src/server/db/index.ts` called `createDb()` eagerly at module load time. Fixed by applying same lazy proxy pattern as auth (`src/server/db/index.ts:17-27`).
+
+- (Post-escalation) `food-extended-a/b/c.ts` had `o()` calls passing serving-size as two separate args instead of `[string, number]` tuple. Vitest/esbuild skips type checking — only caught by `pnpm build`. Fixed: 20+32+8 calls across three files.
+
+- (Post-escalation) `foods.ts` used `SeedFood` type without importing it (only re-exported it). Fixed: `import { mk, type SeedFood }`.
+
 ## GAP
 
 - Spec says "pnpm monorepo" but doesn't specify workspace depth. Chose single-root (co-located) to match "frontend + backend co-located" phrasing.
@@ -23,6 +29,8 @@
 - **Single-root Next.js app**: spec says co-located, single app is simplest.
 
 - **Better Auth lazy proxy**: defers DB connection until first handler call, keeps tests fast (`src/server/auth/index.ts:46-62`).
+
+- **DB lazy proxy**: same pattern applied to `src/server/db/index.ts` — `getDb()` getter wraps `createDb()` behind Proxy export. Prevents `DATABASE_URL` from being required at build/import time.
 
 - **Two separate API handlers**: `/api/auth/[...all]` → Better Auth, `/api/v1/[[...all]]` → Hono. Avoids proxying auth through Hono.
 
@@ -39,6 +47,8 @@
 - Better Auth exposes `requestPasswordReset` (not `forgotPassword`). Spec path `/api/auth/forgot-password` maps to Better Auth's `/api/auth/request-password-reset`.
 
 - Better Auth `auth.api` is safe to access without triggering DB queries — it's just an object of handler functions. Only invoking those functions requires a DB.
+
+- TypeScript type errors in seed data are invisible to Vitest (esbuild transpilation). Always run `pnpm build` to catch type errors — tests alone are insufficient for type safety verification.
 
 ## DEBT
 

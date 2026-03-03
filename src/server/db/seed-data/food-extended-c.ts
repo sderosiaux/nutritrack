@@ -108,14 +108,14 @@ export const EXTENDED_FOODS_C: SeedFood[] = [
   u("usda-445","Sorbet, mango",109,0.3,28,0.1,0.8,"ice cream",["1/2 cup (113g)",113]),
 
   // ── Sports Nutrition & Supplements ──────────────────────────────────────
-  o("off-093","Gatorade Whey Protein Bar",384,20,46,11,2,"snacks","Gatorade","1 bar (80g)",80),
-  o("off-094","Clif Builder's Protein Bar",400,20,44,14,4,"snacks","Clif Bar","1 bar (68g)",68),
-  o("off-095","Kind Protein Bar, Dark Chocolate",390,12,37,18,5,"snacks","Kind","1 bar (60g)",60),
-  o("off-096","Muscle Milk Protein Shake",140,25,6,5,2,"dairy","Hormel","1 bottle (330ml)",330),
-  o("off-097","Soylent Original",400,20,36,21,3,"meals","Soylent","1 bottle (400ml)",400),
-  o("off-098","Orgain Organic Protein Shake",150,16,15,5,4,"dairy","Orgain","1 bottle (330ml)",330),
-  o("off-099","PROBAR Meal Bar",370,10,51,15,5.5,"meals","ProBar","1 bar (85g)",85),
-  o("off-100","Nature's Path Granola, Hemp Plus",432,11,62,18,5.5,"cereals","Nature's Path","1/2 cup (55g)",55),
+  o("off-093","Gatorade Whey Protein Bar",384,20,46,11,2,"snacks","Gatorade",["1 bar (80g)",80]),
+  o("off-094","Clif Builder's Protein Bar",400,20,44,14,4,"snacks","Clif Bar",["1 bar (68g)",68]),
+  o("off-095","Kind Protein Bar, Dark Chocolate",390,12,37,18,5,"snacks","Kind",["1 bar (60g)",60]),
+  o("off-096","Muscle Milk Protein Shake",140,25,6,5,2,"dairy","Hormel",["1 bottle (330ml)",330]),
+  o("off-097","Soylent Original",400,20,36,21,3,"meals","Soylent",["1 bottle (400ml)",400]),
+  o("off-098","Orgain Organic Protein Shake",150,16,15,5,4,"dairy","Orgain",["1 bottle (330ml)",330]),
+  o("off-099","PROBAR Meal Bar",370,10,51,15,5.5,"meals","ProBar",["1 bar (85g)",85]),
+  o("off-100","Nature's Path Granola, Hemp Plus",432,11,62,18,5.5,"cereals","Nature's Path",["1/2 cup (55g)",55]),
 
   // ── More Breakfast & Baked Goods ─────────────────────────────────────────
   u("usda-446","French Toast",229,8,27,10,1.3,"grains",["1 slice (65g)",65]),

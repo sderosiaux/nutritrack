@@ -5,7 +5,7 @@
  * Used by pnpm db:seed to populate the foods table.
  */
 import { generateFoodVariants } from "./food-variants";
-import { mk } from "./food-helpers";
+import { mk, type SeedFood } from "./food-helpers";
 import { EXTENDED_FOODS_A } from "./food-extended-a";
 import { EXTENDED_FOODS_B } from "./food-extended-b";
 import { EXTENDED_FOODS_C } from "./food-extended-c";

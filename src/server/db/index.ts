@@ -14,13 +14,20 @@ function createDb() {
   return drizzle(client, { schema });
 }
 
-// Singleton for server-side usage — avoids connection pool exhaustion in dev
+// Lazy singleton — deferred until first query, avoids DB connection at import time
 const globalForDb = globalThis as unknown as { _db?: ReturnType<typeof createDb> };
 
-export const db = globalForDb._db ?? createDb();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForDb._db = db;
+function getDb() {
+  if (!globalForDb._db) {
+    globalForDb._db = createDb();
+  }
+  return globalForDb._db;
 }
+
+export const db = new Proxy({} as ReturnType<typeof createDb>, {
+  get(_target, prop) {
+    return getDb()[prop as keyof ReturnType<typeof createDb>];
+  },
+});
 
 export type Database = typeof db;
