@@ -38,8 +38,8 @@ coverage/
 playwright-report/
 test-results/
 
-# Drizzle
-drizzle/migrations/*.sql
+# Drizzle — migration SQL files are tracked in git (they are deployment artifacts)
+# drizzle/migrations/*.sql
 
 # Misc
 *.tsbuildinfo

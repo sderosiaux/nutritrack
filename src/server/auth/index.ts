@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { bearer } from "better-auth/plugins";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
@@ -40,6 +41,10 @@ function createAuth() {
     trustedOrigins: [
       process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
     ],
+
+    // Bearer plugin: converts Authorization: Bearer <token> to session cookie.
+    // Enables JWT-style API access without cookie dependencies.
+    plugins: [bearer()],
   });
 }
 
@@ -67,6 +72,8 @@ export type Session = ReturnType<typeof createAuth>["$Infer"]["Session"];
 
 /**
  * Extract and validate session from a request.
+ * Supports both session cookies and Authorization: Bearer <token> headers
+ * (bearer plugin handles header-to-cookie conversion before this call).
  */
 export async function getSessionFromRequest(req: Request) {
   return getAuth().api.getSession({ headers: req.headers });

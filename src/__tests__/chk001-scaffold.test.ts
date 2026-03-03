@@ -3,7 +3,7 @@
  * TypeScript, Tailwind v4, Hono API routes, Vitest, Playwright
  */
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 
 const root = join(__dirname, "../../");
@@ -74,5 +74,62 @@ describe("CHK-001: Project scaffold", () => {
     for (const v of required) {
       expect(content, `${v} missing from .env.example`).toContain(v);
     }
+  });
+});
+
+describe("CHK-001: App Router structure", () => {
+  it("src/app/layout.tsx exists — App Router root layout", () => {
+    const layoutPath = join(root, "src/app/layout.tsx");
+    expect(existsSync(layoutPath), "src/app/layout.tsx not found").toBe(true);
+  });
+
+  it("src/app/page.tsx exists — App Router root page", () => {
+    const pagePath = join(root, "src/app/page.tsx");
+    expect(existsSync(pagePath), "src/app/page.tsx not found").toBe(true);
+  });
+});
+
+describe("CHK-001: Hono API route wiring", () => {
+  it("src/app/api/v1/[[...all]]/route.ts exists — Hono wired into App Router", () => {
+    const routePath = join(root, "src/app/api/v1/[[...all]]/route.ts");
+    expect(existsSync(routePath), "Hono catch-all route not found").toBe(true);
+  });
+
+  it("Hono route imports and delegates to Hono app.fetch", () => {
+    const routePath = join(root, "src/app/api/v1/[[...all]]/route.ts");
+    const content = readFileSync(routePath, "utf-8");
+    expect(content).toContain("app");
+    expect(content).toContain("fetch");
+  });
+
+  it("Hono route exports GET, POST, PUT, PATCH, DELETE handlers", () => {
+    const routePath = join(root, "src/app/api/v1/[[...all]]/route.ts");
+    const content = readFileSync(routePath, "utf-8");
+    for (const method of ["GET", "POST", "PUT", "PATCH", "DELETE"]) {
+      expect(content, `${method} not exported from Hono route`).toContain(method);
+    }
+  });
+
+  it("Hono app responds to health check at /api/v1/health", async () => {
+    const { app } = await import("@/server/api");
+    const req = new Request("http://localhost/api/v1/health");
+    const res = await app.fetch(req);
+    expect(res.status).toBe(200);
+    const body = await res.json() as { status: string };
+    expect(body.status).toBe("ok");
+  });
+});
+
+describe("CHK-001: Better Auth wiring", () => {
+  it("src/app/api/auth/[...all]/route.ts exists — Better Auth wired into App Router", () => {
+    const routePath = join(root, "src/app/api/auth/[...all]/route.ts");
+    expect(existsSync(routePath), "Better Auth catch-all route not found").toBe(true);
+  });
+
+  it("Better Auth route exports GET and POST", () => {
+    const routePath = join(root, "src/app/api/auth/[...all]/route.ts");
+    const content = readFileSync(routePath, "utf-8");
+    expect(content).toContain("GET");
+    expect(content).toContain("POST");
   });
 });

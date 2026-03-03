@@ -1,12 +1,16 @@
 /**
  * CHK-003: Drizzle ORM setup + initial migration:
- * User, UserProfile, DailyTargets, Food, ServingSize,
- * MealEntry, WaterEntry, WeightEntry, ActivityEntry, Exercise, FavoriteRecipes
+ * User, UserProfile, DailyTargets, Food (with nameTranslations JSONB + micronutrients JSONB),
+ * ServingSize, MealEntry, WaterEntry, WeightEntry, ActivityEntry, Exercise, FavoriteRecipes
  */
 import { describe, it, expect } from "vitest";
+import { readdirSync, readFileSync } from "fs";
+import { join } from "path";
 import * as schema from "@/server/db/schema";
 
-describe("CHK-003: Drizzle schema", () => {
+const root = join(__dirname, "../../");
+
+describe("CHK-003: Drizzle schema exports", () => {
   describe("Better Auth tables", () => {
     it("exports user table", () => {
       expect(schema.user).toBeDefined();
@@ -94,5 +98,53 @@ describe("CHK-003: Drizzle schema", () => {
       expect(cols).toHaveProperty("metLow");
       expect(cols).toHaveProperty("metHigh");
     });
+  });
+});
+
+describe("CHK-003: Migration artifacts", () => {
+  it("drizzle/migrations/ directory contains at least one SQL migration file", () => {
+    const migrationsDir = join(root, "drizzle/migrations");
+    const files = readdirSync(migrationsDir).filter((f) => f.endsWith(".sql"));
+    expect(
+      files.length,
+      "No SQL migration files found — run pnpm db:generate"
+    ).toBeGreaterThan(0);
+  });
+
+  it("initial migration SQL creates core tables", () => {
+    const migrationsDir = join(root, "drizzle/migrations");
+    const sqlFiles = readdirSync(migrationsDir)
+      .filter((f) => f.endsWith(".sql"))
+      .sort();
+    const initial = readFileSync(join(migrationsDir, sqlFiles[0]!), "utf-8");
+
+    // Must contain all CHK-003 required tables
+    const requiredTables = [
+      "user",
+      "user_profiles",
+      "daily_targets",
+      "foods",
+      "serving_sizes",
+      "meal_entries",
+      "water_entries",
+      "weight_entries",
+      "activity_entries",
+      "exercises",
+    ];
+    for (const table of requiredTables) {
+      expect(
+        initial,
+        `CREATE TABLE for '${table}' missing from initial migration`
+      ).toMatch(new RegExp(`CREATE TABLE[^;]*"${table}"`, "i"));
+    }
+  });
+
+  it("initial migration SQL creates favorite_recipes table", () => {
+    const migrationsDir = join(root, "drizzle/migrations");
+    const sqlFiles = readdirSync(migrationsDir)
+      .filter((f) => f.endsWith(".sql"))
+      .sort();
+    const initial = readFileSync(join(migrationsDir, sqlFiles[0]!), "utf-8");
+    expect(initial).toMatch(/CREATE TABLE[^;]*"favorite_recipes"/i);
   });
 });
