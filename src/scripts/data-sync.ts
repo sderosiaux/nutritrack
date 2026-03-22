@@ -508,17 +508,23 @@ async function importUsda(sql: postgres.Sql, limit: number): Promise<number> {
   mkdirSync(extractDir, { recursive: true });
 
   try {
-    // Use execFileSync (no shell interpolation — safe from injection)
     execFileSync("unzip", [
       "-o", "-j", destPath,
       "*/food.csv", "*/food_nutrient.csv", "*/food_portion.csv",
       "-d", extractDir,
     ], { stdio: "pipe" });
 
-    console.log("[USDA] Building nutrient map...");
+    // Step 1: Stream nutrients into a temp table (too large for memory)
+    console.log("[USDA] Loading nutrients into temp table...");
+    await sql`
+      CREATE TEMPORARY TABLE IF NOT EXISTS usda_nutrients (
+        fdc_id text NOT NULL,
+        nutrient_id integer NOT NULL,
+        amount numeric NOT NULL DEFAULT 0
+      ) ON COMMIT PRESERVE ROWS
+    `;
+    await sql`TRUNCATE usda_nutrients`;
 
-    // Step 1: Build nutrient map
-    const nutrientMap = new Map<string, Record<number, number>>();
     const nutrientIds = new Set([
       NUTRIENT_ENERGY, NUTRIENT_PROTEIN, NUTRIENT_CARBS, NUTRIENT_FAT,
       NUTRIENT_FIBER, NUTRIENT_SUGAR, NUTRIENT_SODIUM, NUTRIENT_SAT_FAT,
@@ -527,29 +533,119 @@ async function importUsda(sql: postgres.Sql, limit: number): Promise<number> {
     const nutrientStream = createReadStream(join(extractDir, "food_nutrient.csv"))
       .pipe(parse({ columns: true, skip_empty_lines: true }));
 
+    let nutrientBatch: { fdc_id: string; nutrient_id: number; amount: number }[] = [];
     let nutrientRows = 0;
     for await (const row of nutrientStream) {
       const r = row as Record<string, string>;
       const nutrientId = parseInt(r["nutrient_id"] ?? "");
       if (!nutrientIds.has(nutrientId)) continue;
-
       const fdcId = r["fdc_id"] ?? "";
       if (!fdcId) continue;
 
-      let map = nutrientMap.get(fdcId);
-      if (!map) { map = {}; nutrientMap.set(fdcId, map); }
-      map[nutrientId] = num(r["amount"]);
+      nutrientBatch.push({ fdc_id: fdcId, nutrient_id: nutrientId, amount: num(r["amount"]) });
       nutrientRows++;
-    }
-    console.log(`[USDA] Loaded ${nutrientRows.toLocaleString()} nutrient rows for ${nutrientMap.size.toLocaleString()} foods`);
 
-    // Step 2: Build serving sizes from food_portion.csv
-    const portionMap = new Map<string, ServingRow[]>();
+      if (nutrientBatch.length >= 5000) {
+        await sql`INSERT INTO usda_nutrients ${sql(nutrientBatch)}`;
+        nutrientBatch = [];
+      }
+    }
+    if (nutrientBatch.length > 0) {
+      await sql`INSERT INTO usda_nutrients ${sql(nutrientBatch)}`;
+    }
+    console.log(`[USDA] Loaded ${nutrientRows.toLocaleString()} nutrient rows into temp table`);
+
+    // Index for fast pivot
+    await sql`CREATE INDEX ON usda_nutrients (fdc_id)`;
+
+    // Step 2: Pivot nutrients and insert directly into foods_staging via SQL
+    console.log("[USDA] Pivoting nutrients and staging foods...");
+    await resetStagingTables(sql);
+
+    // Stream food.csv for names, then join with pivoted nutrients in SQL
+    const foodStream = createReadStream(join(extractDir, "food.csv"))
+      .pipe(parse({ columns: true, skip_empty_lines: true }));
+
+    // Load food names into a temp table too (light, just id + name)
+    await sql`
+      CREATE TEMPORARY TABLE IF NOT EXISTS usda_foods_raw (
+        fdc_id text PRIMARY KEY,
+        description text NOT NULL
+      ) ON COMMIT PRESERVE ROWS
+    `;
+    await sql`TRUNCATE usda_foods_raw`;
+
+    let foodBatch: { fdc_id: string; description: string }[] = [];
+    let foodCount = 0;
+    for await (const row of foodStream) {
+      if (limit > 0 && foodCount >= limit) break;
+      const r = row as Record<string, string>;
+      const fdcId = r["fdc_id"] ?? "";
+      const description = r["description"]?.trim() ?? "";
+      if (!fdcId || !description) continue;
+
+      foodBatch.push({ fdc_id: fdcId, description });
+      foodCount++;
+
+      if (foodBatch.length >= 5000) {
+        await sql`INSERT INTO usda_foods_raw ${sql(foodBatch)} ON CONFLICT (fdc_id) DO NOTHING`;
+        foodBatch = [];
+        if (foodCount % 100_000 === 0) {
+          console.log(`[USDA] ${foodCount.toLocaleString()} food names staged (${elapsed(start)})`);
+        }
+      }
+    }
+    if (foodBatch.length > 0) {
+      await sql`INSERT INTO usda_foods_raw ${sql(foodBatch)} ON CONFLICT (fdc_id) DO NOTHING`;
+    }
+    console.log(`[USDA] ${foodCount.toLocaleString()} food names loaded (${elapsed(start)})`);
+
+    // Pivot nutrients + join foods in one SQL statement → foods_staging
+    console.log("[USDA] Pivoting into foods_staging...");
+    await sql`
+      INSERT INTO foods_staging (
+        id, name, source, source_id, verified,
+        calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g,
+        fiber_per_100g, sugar_per_100g, sodium_mg_per_100g, saturated_fat_per_100g
+      )
+      SELECT
+        'usda-' || f.fdc_id,
+        f.description,
+        'usda',
+        f.fdc_id,
+        true,
+        LEAST(COALESCE(MAX(CASE WHEN n.nutrient_id = ${NUTRIENT_ENERGY} THEN n.amount END), 0), 99999),
+        LEAST(COALESCE(MAX(CASE WHEN n.nutrient_id = ${NUTRIENT_PROTEIN} THEN n.amount END), 0), 9999),
+        LEAST(COALESCE(MAX(CASE WHEN n.nutrient_id = ${NUTRIENT_CARBS} THEN n.amount END), 0), 9999),
+        LEAST(COALESCE(MAX(CASE WHEN n.nutrient_id = ${NUTRIENT_FAT} THEN n.amount END), 0), 9999),
+        LEAST(COALESCE(MAX(CASE WHEN n.nutrient_id = ${NUTRIENT_FIBER} THEN n.amount END), 0), 9999),
+        LEAST(MAX(CASE WHEN n.nutrient_id = ${NUTRIENT_SUGAR} THEN n.amount END), 9999),
+        LEAST(MAX(CASE WHEN n.nutrient_id = ${NUTRIENT_SODIUM} THEN n.amount END), 999999),
+        LEAST(MAX(CASE WHEN n.nutrient_id = ${NUTRIENT_SAT_FAT} THEN n.amount END), 9999)
+      FROM usda_foods_raw f
+      LEFT JOIN usda_nutrients n ON n.fdc_id = f.fdc_id
+      GROUP BY f.fdc_id, f.description
+      ON CONFLICT (id) DO UPDATE SET
+        name = EXCLUDED.name,
+        calories_per_100g = EXCLUDED.calories_per_100g,
+        protein_per_100g = EXCLUDED.protein_per_100g,
+        carbs_per_100g = EXCLUDED.carbs_per_100g,
+        fat_per_100g = EXCLUDED.fat_per_100g,
+        fiber_per_100g = EXCLUDED.fiber_per_100g,
+        sugar_per_100g = EXCLUDED.sugar_per_100g,
+        sodium_mg_per_100g = EXCLUDED.sodium_mg_per_100g,
+        saturated_fat_per_100g = EXCLUDED.saturated_fat_per_100g
+    `;
+    console.log(`[USDA] Pivot complete (${elapsed(start)})`);
+
+    // Step 3: Serving sizes from food_portion.csv (small, can stay in memory)
     const portionFile = join(extractDir, "food_portion.csv");
     if (existsSync(portionFile)) {
       const portionStream = createReadStream(portionFile)
         .pipe(parse({ columns: true, skip_empty_lines: true }));
 
+      let servingBatch: ServingRow[] = [];
+      let portionCount = 0;
       for await (const row of portionStream) {
         const r = row as Record<string, string>;
         const fdcId = r["fdc_id"] ?? "";
@@ -557,62 +653,38 @@ async function importUsda(sql: postgres.Sql, limit: number): Promise<number> {
         const grams = num(r["gram_weight"]);
         const portionId = r["id"] ?? "";
 
-        if (!fdcId || !desc || grams <= 0) continue;
+        if (!fdcId || !desc || grams <= 0 || grams > 99999) continue;
 
-        const portions = portionMap.get(fdcId) ?? [];
-        portions.push({
+        servingBatch.push({
           id: `usda-${fdcId}-ss${portionId}`,
           foodId: `usda-${fdcId}`,
           label: desc,
           weightG: grams,
         });
-        portionMap.set(fdcId, portions);
+        portionCount++;
+
+        if (servingBatch.length >= 2000) {
+          await insertServingBatch(sql, servingBatch);
+          servingBatch = [];
+        }
       }
-      console.log(`[USDA] Loaded portions for ${portionMap.size.toLocaleString()} foods`);
+      if (servingBatch.length > 0) await insertServingBatch(sql, servingBatch);
+      console.log(`[USDA] Loaded ${portionCount.toLocaleString()} portions (${elapsed(start)})`);
     }
 
-    // Step 3: Stream food.csv and build food records
-    await resetStagingTables(sql);
-
-    const foodStream = createReadStream(join(extractDir, "food.csv"))
-      .pipe(parse({ columns: true, skip_empty_lines: true }));
-
-    let processed = 0;
-    const batch = new BatchAccumulator(sql, "USDA", start);
-
-    for await (const row of foodStream) {
-      if (limit > 0 && processed >= limit) break;
-      processed++;
-
-      const r = row as Record<string, string>;
-      const fdcId = r["fdc_id"] ?? "";
-      const description = r["description"]?.trim() ?? "";
-      if (!fdcId || !description) continue;
-
-      const nutrients = nutrientMap.get(fdcId) ?? {};
-      const food = parseUsdaFood({ fdc_id: fdcId, description }, nutrients);
-      const portions = portionMap.get(fdcId);
-      await batch.add(food, portions ?? []);
-    }
-    await batch.flush();
-
-    // Free memory before upsert
-    nutrientMap.clear();
-    portionMap.clear();
-
-    console.log(`[USDA] Staging complete: ${batch.count.toLocaleString()} foods (${elapsed(start)})`);
     console.log(`[USDA] Upserting into main tables...`);
-
     await upsertFromStaging(sql);
 
-    // Save meta only after successful upsert
+    // Cleanup temp tables
+    await sql`DROP TABLE IF EXISTS usda_nutrients`;
+    await sql`DROP TABLE IF EXISTS usda_foods_raw`;
+
     meta.usda = { etag: dl.etag, lastSync: new Date().toISOString() };
     saveMeta(meta);
 
-    console.log(`[USDA] Done: ${batch.count.toLocaleString()} foods upserted in ${elapsed(start)}`);
-    return batch.count;
+    console.log(`[USDA] Done: ${foodCount.toLocaleString()} foods upserted in ${elapsed(start)}`);
+    return foodCount;
   } finally {
-    // Cleanup extracted files
     rmSync(extractDir, { recursive: true, force: true });
   }
 }
