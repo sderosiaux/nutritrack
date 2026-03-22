@@ -5,6 +5,8 @@ import { health } from "./routes/health";
 import { foods } from "./routes/foods";
 import { logs } from "./routes/logs";
 import { lessons } from "./routes/lessons";
+import { recipes } from "./routes/recipes";
+import { exercisesRouter } from "./routes/exercises";
 import { sessionMiddleware } from "./middleware/auth";
 
 const app = new Hono().basePath("/api/v1");
@@ -30,6 +32,12 @@ app.route("/logs", logs);
 
 // Educational content
 app.route("/lessons", lessons);
+
+// Recipes
+app.route("/recipes", recipes);
+
+// Exercises (public read-only)
+app.route("/exercises", exercisesRouter);
 
 // 404 fallback
 app.notFound((c) => {

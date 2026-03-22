@@ -1,9 +1,13 @@
 /**
- * Log service: meal entry CRUD, water entry CRUD, daily log aggregate.
+ * Log service: meal entry CRUD, water entry CRUD, weight entry CRUD,
+ * activity entry CRUD, daily log aggregate.
  * All macro snapshots computed on write and stored denormalized for read performance.
  */
-import { db, foods, servingSizes, mealEntries, waterEntries } from "@/server/db";
-import { eq, and, sql } from "drizzle-orm";
+import {
+  db, foods, servingSizes, mealEntries, waterEntries,
+  weightEntries, activityEntries, exercises,
+} from "@/server/db";
+import { eq, and, sql, gte, desc } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -391,6 +395,247 @@ type JoinedMealRow = {
   servingSizeLabel?: string | null;
   servingSizeWeightG?: string | number | null;
 };
+
+// ── Weight Entry CRUD ──────────────────────────────────────────────────────
+
+export type CreateWeightEntryDto = {
+  weightKg: number;
+  note?: string;
+};
+
+export type UpdateWeightEntryDto = {
+  weightKg?: number;
+  note?: string;
+};
+
+export type WeightEntryResult = {
+  id: string;
+  userId: string;
+  date: string;
+  loggedAt: Date;
+  weightKg: number;
+  note: string | null;
+};
+
+function rowToWeightEntry(row: typeof weightEntries.$inferSelect): WeightEntryResult {
+  return {
+    id: row.id,
+    userId: row.userId,
+    date: row.date,
+    loggedAt: row.loggedAt,
+    weightKg: toNum(row.weightKg),
+    note: row.note,
+  };
+}
+
+export async function createWeightEntry(
+  userId: string,
+  date: string,
+  dto: CreateWeightEntryDto
+): Promise<WeightEntryResult> {
+  if (dto.weightKg <= 0) {
+    throw Object.assign(new Error("weightKg must be positive"), { code: "validation_error" });
+  }
+
+  const id = randomUUID();
+  const loggedAt = new Date();
+
+  const [inserted] = await db.insert(weightEntries).values({
+    id, userId, date, loggedAt,
+    weightKg: String(dto.weightKg),
+    note: dto.note ?? null,
+  }).returning();
+
+  if (inserted) return rowToWeightEntry(inserted as typeof weightEntries.$inferSelect);
+  return { id, userId, date, loggedAt, weightKg: dto.weightKg, note: dto.note ?? null };
+}
+
+export async function updateWeightEntry(
+  entryId: string,
+  userId: string,
+  dto: UpdateWeightEntryDto
+): Promise<WeightEntryResult> {
+  const [existing] = await db.select().from(weightEntries).where(eq(weightEntries.id, entryId));
+  if (!existing) throw Object.assign(new Error("Entry not found"), { code: "not_found" });
+  if (existing.userId !== userId) throw Object.assign(new Error("Forbidden"), { code: "forbidden" });
+
+  const updates: Partial<typeof weightEntries.$inferInsert> = {};
+  if (dto.weightKg !== undefined) updates.weightKg = String(dto.weightKg);
+  if (dto.note !== undefined) updates.note = dto.note;
+
+  const rows = await db.update(weightEntries).set(updates).where(eq(weightEntries.id, entryId)).returning();
+  const updated = rows[0] ?? { ...existing, ...updates };
+  return rowToWeightEntry(updated as typeof weightEntries.$inferSelect);
+}
+
+export async function deleteWeightEntry(entryId: string, userId: string): Promise<void> {
+  const [existing] = await db.select().from(weightEntries).where(eq(weightEntries.id, entryId));
+  if (!existing) throw Object.assign(new Error("Entry not found"), { code: "not_found" });
+  if (existing.userId !== userId) throw Object.assign(new Error("Forbidden"), { code: "forbidden" });
+  await db.delete(weightEntries).where(eq(weightEntries.id, entryId));
+}
+
+export async function getWeightEntries(userId: string): Promise<WeightEntryResult[]> {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 90);
+
+  const rows = await db
+    .select()
+    .from(weightEntries)
+    .where(and(
+      eq(weightEntries.userId, userId),
+      gte(weightEntries.loggedAt, cutoff)
+    ))
+    .orderBy(desc(weightEntries.loggedAt));
+
+  return rows.map(rowToWeightEntry);
+}
+
+// ── Activity Entry CRUD ────────────────────────────────────────────────────
+
+export type CreateActivityEntryDto = {
+  exerciseId?: string;
+  customName?: string;
+  durationMinutes: number;
+  caloriesBurned?: number;   // override if no exerciseId
+  userWeightKg?: number;     // used for MET calc if exerciseId provided
+  intensityLevel?: "low" | "moderate" | "high";
+  loggedAt?: string;
+  notes?: string;
+};
+
+export type UpdateActivityEntryDto = {
+  durationMinutes?: number;
+  caloriesBurned?: number;
+  intensityLevel?: "low" | "moderate" | "high";
+  notes?: string;
+};
+
+export type ActivityEntryResult = {
+  id: string;
+  userId: string;
+  date: string;
+  loggedAt: Date;
+  exerciseId: string | null;
+  customName: string | null;
+  durationMin: number;
+  intensityLevel: string | null;
+  caloriesBurned: number;
+  notes: string | null;
+};
+
+/**
+ * Pure function: MET-based calorie estimate.
+ * calories = MET × weightKg × (durationMin / 60)
+ * Exported for direct unit testing.
+ */
+export function computeCaloriesBurned(metValue: number, weightKg: number, durationMin: number): number {
+  return metValue * weightKg * (durationMin / 60);
+}
+
+function rowToActivityEntry(row: typeof activityEntries.$inferSelect): ActivityEntryResult {
+  return {
+    id: row.id,
+    userId: row.userId,
+    date: row.date,
+    loggedAt: row.loggedAt,
+    exerciseId: row.exerciseId,
+    customName: row.customName,
+    durationMin: row.durationMin,
+    intensityLevel: row.intensityLevel,
+    caloriesBurned: toNum(row.caloriesBurned),
+    notes: row.notes,
+  };
+}
+
+export async function createActivityEntry(
+  userId: string,
+  date: string,
+  dto: CreateActivityEntryDto
+): Promise<ActivityEntryResult> {
+  if (!dto.exerciseId && !dto.customName) {
+    throw Object.assign(new Error("exerciseId or customName required"), { code: "validation_error" });
+  }
+
+  let kcalBurned = dto.caloriesBurned ?? 0;
+
+  if (dto.exerciseId) {
+    const [exercise] = await db.select().from(exercises).where(eq(exercises.id, dto.exerciseId));
+    if (!exercise) throw Object.assign(new Error("Exercise not found"), { code: "not_found" });
+
+    // Pick MET by intensity
+    let met = toNum(exercise.metValue);
+    if (dto.intensityLevel === "low") met = toNum(exercise.metLow);
+    else if (dto.intensityLevel === "high") met = toNum(exercise.metHigh);
+
+    const weightKg = dto.userWeightKg ?? 70; // fallback default 70kg
+    kcalBurned = computeCaloriesBurned(met, weightKg, dto.durationMinutes);
+  }
+
+  const id = randomUUID();
+  const loggedAt = dto.loggedAt ? new Date(dto.loggedAt) : new Date();
+
+  const [inserted] = await db.insert(activityEntries).values({
+    id, userId, date, loggedAt,
+    exerciseId: dto.exerciseId ?? null,
+    customName: dto.customName ?? null,
+    durationMin: dto.durationMinutes,
+    intensityLevel: (dto.intensityLevel ?? null) as typeof activityEntries.$inferInsert["intensityLevel"],
+    caloriesBurned: String(kcalBurned),
+    notes: dto.notes ?? null,
+  }).returning();
+
+  if (inserted) return rowToActivityEntry(inserted as typeof activityEntries.$inferSelect);
+
+  return {
+    id, userId, date, loggedAt,
+    exerciseId: dto.exerciseId ?? null,
+    customName: dto.customName ?? null,
+    durationMin: dto.durationMinutes,
+    intensityLevel: dto.intensityLevel ?? null,
+    caloriesBurned: kcalBurned,
+    notes: dto.notes ?? null,
+  };
+}
+
+export async function updateActivityEntry(
+  entryId: string,
+  userId: string,
+  dto: UpdateActivityEntryDto
+): Promise<ActivityEntryResult> {
+  const [existing] = await db.select().from(activityEntries).where(eq(activityEntries.id, entryId));
+  if (!existing) throw Object.assign(new Error("Entry not found"), { code: "not_found" });
+  if (existing.userId !== userId) throw Object.assign(new Error("Forbidden"), { code: "forbidden" });
+
+  const updates: Partial<typeof activityEntries.$inferInsert> = {};
+  if (dto.durationMinutes !== undefined) updates.durationMin = dto.durationMinutes;
+  if (dto.caloriesBurned !== undefined) updates.caloriesBurned = String(dto.caloriesBurned);
+  if (dto.intensityLevel !== undefined) updates.intensityLevel = dto.intensityLevel as typeof activityEntries.$inferInsert["intensityLevel"];
+  if (dto.notes !== undefined) updates.notes = dto.notes;
+
+  const rows = await db.update(activityEntries).set(updates).where(eq(activityEntries.id, entryId)).returning();
+  const updated = rows[0] ?? { ...existing, ...updates };
+  return rowToActivityEntry(updated as typeof activityEntries.$inferSelect);
+}
+
+export async function deleteActivityEntry(entryId: string, userId: string): Promise<void> {
+  const [existing] = await db.select().from(activityEntries).where(eq(activityEntries.id, entryId));
+  if (!existing) throw Object.assign(new Error("Entry not found"), { code: "not_found" });
+  if (existing.userId !== userId) throw Object.assign(new Error("Forbidden"), { code: "forbidden" });
+  await db.delete(activityEntries).where(eq(activityEntries.id, entryId));
+}
+
+export async function getActivityEntries(userId: string, date: string): Promise<ActivityEntryResult[]> {
+  const rows = await db
+    .select()
+    .from(activityEntries)
+    .where(and(eq(activityEntries.userId, userId), eq(activityEntries.date, date)))
+    .orderBy(activityEntries.loggedAt);
+
+  return rows.map(rowToActivityEntry);
+}
+
+// ── Daily Log Aggregate ────────────────────────────────────────────────────
 
 export async function getDailyLog(userId: string, date: string): Promise<DailyLogResult> {
   // Fetch meal entries joined with food name and serving size label

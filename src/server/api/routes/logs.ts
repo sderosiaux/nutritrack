@@ -1,9 +1,14 @@
 /**
- * Logging routes: meal entries, water entries, daily log aggregate.
- * POST/PUT/DELETE /api/v1/logs/:date/meals — meal entry CRUD
- * POST/DELETE /api/v1/logs/:date/water   — water entry CRUD
- * GET /api/v1/logs/water?date=...        — list water entries
- * GET /api/v1/logs/:date                 — daily log aggregate
+ * Logging routes: meal entries, water entries, weight entries,
+ * activity entries, daily log aggregate.
+ * POST/PUT/DELETE /api/v1/logs/:date/meals      — meal entry CRUD
+ * POST/DELETE /api/v1/logs/:date/water          — water entry CRUD
+ * GET /api/v1/logs/water?date=...               — list water entries
+ * POST/PUT/DELETE /api/v1/logs/:date/weight     — weight entry CRUD
+ * GET /api/v1/logs/weight                       — list last 90 days weight
+ * POST/PUT/DELETE /api/v1/logs/:date/activities — activity entry CRUD
+ * GET /api/v1/logs/activities?date=...          — list activities by date
+ * GET /api/v1/logs/:date                        — daily log aggregate
  */
 import { Hono } from "hono";
 import { z } from "zod";
@@ -42,6 +47,34 @@ const updateMealSchema = z.object({
 const createWaterSchema = z.object({
   amountMl: z.number().positive(),
   loggedAt: z.string().optional(),
+});
+
+const createWeightSchema = z.object({
+  weightKg: z.number().positive(),
+  note: z.string().optional(),
+});
+
+const updateWeightSchema = z.object({
+  weightKg: z.number().positive().optional(),
+  note: z.string().optional(),
+});
+
+const createActivitySchema = z.object({
+  exerciseId: z.string().min(1).optional(),
+  customName: z.string().min(1).optional(),
+  durationMinutes: z.number().int().positive(),
+  caloriesBurned: z.number().positive().optional(),
+  userWeightKg: z.number().positive().optional(),
+  intensityLevel: z.enum(["low", "moderate", "high"]).optional(),
+  loggedAt: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+const updateActivitySchema = z.object({
+  durationMinutes: z.number().int().positive().optional(),
+  caloriesBurned: z.number().positive().optional(),
+  intensityLevel: z.enum(["low", "moderate", "high"]).optional(),
+  notes: z.string().optional(),
 });
 
 // ── Static routes (must precede /:date) ──────────────────────────────────
@@ -116,6 +149,107 @@ router.delete("/water/:id", async (c) => {
   }
 });
 
+// GET /api/v1/logs/weight — list last 90 days
+router.get("/weight", async (c) => {
+  const userId = c.get("session")!.user.id;
+  const entries = await logService.getWeightEntries(userId);
+  return c.json(entries);
+});
+
+// PUT /api/v1/logs/weight/:id
+router.put("/weight/:id", async (c) => {
+  const entryId = c.req.param("id");
+  const userId = c.get("session")!.user.id;
+
+  let body: unknown;
+  try { body = await c.req.json(); } catch {
+    return c.json({ error: "Invalid JSON", code: "validation_error" }, 422);
+  }
+
+  const parsed = updateWeightSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: "Validation error", code: "validation_error", details: parsed.error.flatten() }, 422);
+  }
+
+  try {
+    const entry = await logService.updateWeightEntry(entryId, userId, parsed.data);
+    return c.json(entry);
+  } catch (err: unknown) {
+    const e = err as { code?: string };
+    if (e?.code === "forbidden") return c.json({ error: "Forbidden", code: "forbidden" }, 403);
+    if (e?.code === "not_found") return c.json({ error: "Not found", code: "not_found" }, 404);
+    throw err;
+  }
+});
+
+// DELETE /api/v1/logs/weight/:id
+router.delete("/weight/:id", async (c) => {
+  const entryId = c.req.param("id");
+  const userId = c.get("session")!.user.id;
+
+  try {
+    await logService.deleteWeightEntry(entryId, userId);
+    return c.body(null, 204);
+  } catch (err: unknown) {
+    const e = err as { code?: string };
+    if (e?.code === "forbidden") return c.json({ error: "Forbidden", code: "forbidden" }, 403);
+    if (e?.code === "not_found") return c.json({ error: "Not found", code: "not_found" }, 404);
+    throw err;
+  }
+});
+
+// GET /api/v1/logs/activities?date=YYYY-MM-DD
+router.get("/activities", async (c) => {
+  const userId = c.get("session")!.user.id;
+  const date = c.req.query("date");
+  if (!date) return c.json({ error: "date query param required", code: "validation_error" }, 422);
+
+  const entries = await logService.getActivityEntries(userId, date);
+  return c.json(entries);
+});
+
+// PUT /api/v1/logs/activities/:id
+router.put("/activities/:id", async (c) => {
+  const entryId = c.req.param("id");
+  const userId = c.get("session")!.user.id;
+
+  let body: unknown;
+  try { body = await c.req.json(); } catch {
+    return c.json({ error: "Invalid JSON", code: "validation_error" }, 422);
+  }
+
+  const parsed = updateActivitySchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: "Validation error", code: "validation_error", details: parsed.error.flatten() }, 422);
+  }
+
+  try {
+    const entry = await logService.updateActivityEntry(entryId, userId, parsed.data);
+    return c.json(entry);
+  } catch (err: unknown) {
+    const e = err as { code?: string };
+    if (e?.code === "forbidden") return c.json({ error: "Forbidden", code: "forbidden" }, 403);
+    if (e?.code === "not_found") return c.json({ error: "Not found", code: "not_found" }, 404);
+    throw err;
+  }
+});
+
+// DELETE /api/v1/logs/activities/:id
+router.delete("/activities/:id", async (c) => {
+  const entryId = c.req.param("id");
+  const userId = c.get("session")!.user.id;
+
+  try {
+    await logService.deleteActivityEntry(entryId, userId);
+    return c.body(null, 204);
+  } catch (err: unknown) {
+    const e = err as { code?: string };
+    if (e?.code === "forbidden") return c.json({ error: "Forbidden", code: "forbidden" }, 403);
+    if (e?.code === "not_found") return c.json({ error: "Not found", code: "not_found" }, 404);
+    throw err;
+  }
+});
+
 // ── Date-based routes ─────────────────────────────────────────────────────
 
 // GET /api/v1/logs/:date — daily log aggregate
@@ -146,6 +280,57 @@ router.post("/:date/meals", async (c) => {
 
   try {
     const entry = await logService.createMealEntry(userId, date, parsed.data);
+    return c.json(entry, 201);
+  } catch (err: unknown) {
+    const e = err as { code?: string };
+    if (e?.code === "not_found") return c.json({ error: "Not found", code: "not_found" }, 404);
+    if (e?.code === "validation_error") return c.json({ error: "Validation error", code: "validation_error" }, 422);
+    throw err;
+  }
+});
+
+// POST /api/v1/logs/:date/weight
+router.post("/:date/weight", async (c) => {
+  const userId = c.get("session")!.user.id;
+  const date = c.req.param("date");
+
+  let body: unknown;
+  try { body = await c.req.json(); } catch {
+    return c.json({ error: "Invalid JSON", code: "validation_error" }, 422);
+  }
+
+  const parsed = createWeightSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: "Validation error", code: "validation_error", details: parsed.error.flatten() }, 422);
+  }
+
+  try {
+    const entry = await logService.createWeightEntry(userId, date, parsed.data);
+    return c.json(entry, 201);
+  } catch (err: unknown) {
+    const e = err as { code?: string };
+    if (e?.code === "validation_error") return c.json({ error: "Validation error", code: "validation_error" }, 422);
+    throw err;
+  }
+});
+
+// POST /api/v1/logs/:date/activities
+router.post("/:date/activities", async (c) => {
+  const userId = c.get("session")!.user.id;
+  const date = c.req.param("date");
+
+  let body: unknown;
+  try { body = await c.req.json(); } catch {
+    return c.json({ error: "Invalid JSON", code: "validation_error" }, 422);
+  }
+
+  const parsed = createActivitySchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: "Validation error", code: "validation_error", details: parsed.error.flatten() }, 422);
+  }
+
+  try {
+    const entry = await logService.createActivityEntry(userId, date, parsed.data);
     return c.json(entry, 201);
   } catch (err: unknown) {
     const e = err as { code?: string };

@@ -285,27 +285,27 @@
   source: "spec/07-api.md:§Meal Logging"
   milestone: "M2"
   lane: 7
-  status: "pending"
-  test: null
-  commit: null
+  status: "DONE"
+  test: "src/__tests__/chk024-weight-logging.test.ts"
+  commit: "pending"
 
 - id: "CHK-025"
   description: "Activity logging API + UI: POST/PUT/DELETE /api/v1/logs/:date/activities, exercise search GET /api/v1/exercises, activity log modal (search exercises, duration input, intensity selector, MET-based calorie estimate), activity tile on dashboard"
   source: "spec/07-api.md:§Exercises"
   milestone: "M2"
   lane: 7
-  status: "pending"
-  test: null
-  commit: null
+  status: "DONE"
+  test: "src/__tests__/chk025-activity-logging.test.ts"
+  commit: "pending"
 
 - id: "CHK-026"
   description: "Exercise DB seed: 200+ activities with MET values across cardio, strength, flexibility, sports, daily_activity categories"
   source: "spec/01-features.md:§F7"
   milestone: "M2"
   lane: 7
-  status: "pending"
-  test: null
-  commit: null
+  status: "DONE"
+  test: "src/__tests__/chk026-exercises.test.ts"
+  commit: "pending"
 
 # ── M3: AI Food Recognition ────────────────────────────────────
 
