@@ -14,6 +14,8 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { requireAuth } from "../middleware/auth";
 import * as logService from "@/server/services/log-service";
+import { parseQuickAdd, estimateGrams } from "@/server/services/quick-add-service";
+import { searchFoods } from "@/server/services/food-service";
 
 type Env = { Variables: { session: { user: { id: string; email: string; name?: string } } | null } };
 
@@ -365,6 +367,86 @@ router.post("/:date/water", async (c) => {
     if (e?.code === "validation_error") return c.json({ error: "Validation error", code: "validation_error" }, 422);
     throw err;
   }
+});
+
+// POST /api/v1/logs/quick-add — NLP free-text food logging
+const quickAddSchema = z.object({
+  text: z.string().min(1),
+  date: z.string().min(1),
+  mealType: z.enum([
+    "breakfast", "morning_snack", "lunch",
+    "afternoon_snack", "dinner", "evening_snack", "other",
+  ]),
+});
+
+router.post("/quick-add", async (c) => {
+  const userId = c.get("session")!.user.id;
+
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "Invalid JSON", code: "validation_error" }, 422);
+  }
+
+  const parsed = quickAddSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json(
+      { error: "Validation error", code: "validation_error", details: parsed.error.flatten() },
+      422
+    );
+  }
+
+  const { text, date, mealType } = parsed.data;
+  const parsedItems = parseQuickAdd(text);
+
+  if (parsedItems.length === 0) {
+    return c.json({ matched: [], unmatched: [], total: 0 });
+  }
+
+  const matched: Array<{
+    food: { id: string; name: string; caloriesPer100g: number };
+    query: string;
+    grams: number;
+  }> = [];
+  const unmatched: string[] = [];
+
+  for (const item of parsedItems) {
+    try {
+      const results = await searchFoods({ query: item.query, userId, limit: 1 });
+      if (results.length === 0) {
+        unmatched.push(item.originalText);
+        continue;
+      }
+
+      const food = results[0];
+      const servingGrams = food.servingSizes[0]?.weightG ?? 100;
+      const grams = estimateGrams(item, servingGrams);
+
+      // Create meal entry
+      await logService.createMealEntry(userId, date, {
+        foodId: food.id,
+        servingSizeId: food.servingSizes[0]?.id ?? "",
+        quantity: grams / (food.servingSizes[0]?.weightG ?? 100),
+        mealType,
+      });
+
+      matched.push({
+        food: {
+          id: food.id,
+          name: food.name,
+          caloriesPer100g: food.caloriesPer100g,
+        },
+        query: item.query,
+        grams,
+      });
+    } catch {
+      unmatched.push(item.originalText);
+    }
+  }
+
+  const status = matched.length > 0 ? 201 : 200;
+  return c.json({ matched, unmatched, total: parsedItems.length }, status);
 });
 
 export { router as logs };

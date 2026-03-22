@@ -314,8 +314,8 @@
   source: "spec/05-tech-stack.md:§Photo Recognition Flow"
   milestone: "M3"
   lane: 8
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk027-image-upload.test.ts"
   commit: null
 
 - id: "CHK-028"
@@ -323,8 +323,8 @@
   source: "spec/07-api.md:§Photo Recognition"
   milestone: "M3"
   lane: 8
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk028-vision-queue.test.ts"
   commit: null
 
 - id: "CHK-029"
@@ -332,8 +332,8 @@
   source: "spec/05-tech-stack.md:§AI / Food Recognition"
   milestone: "M3"
   lane: 8
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk029-vision-providers.test.ts"
   commit: null
 
 - id: "CHK-030"
@@ -341,8 +341,8 @@
   source: "spec/04-screens.md:§S-LOG-2"
   milestone: "M3"
   lane: 8
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk030-photo-capture.test.tsx"
   commit: null
 
 - id: "CHK-031"
@@ -350,8 +350,8 @@
   source: "spec/04-screens.md:§S-LOG-8"
   milestone: "M3"
   lane: 8
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk031-voice-input.test.tsx"
   commit: null
 
 - id: "CHK-056"
@@ -359,8 +359,8 @@
   source: "spec/01-features.md:§F2.5"
   milestone: "M3"
   lane: 8
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk056-quick-add.test.ts"
   commit: null
 
 # ── M4: Analytics ──────────────────────────────────────────────
