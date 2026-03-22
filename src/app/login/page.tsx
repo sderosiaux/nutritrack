@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { loginFormSchema, zodResolver, type LoginFormValues } from "@/lib/forms";
 
 export default function LoginPage() {
+  const router = useRouter();
   const {
     register,
     handleSubmit,
@@ -20,7 +22,7 @@ export default function LoginPage() {
       body: JSON.stringify(data),
     });
     if (res.ok) {
-      window.location.href = "/today";
+      router.push("/today");
     }
   }
 

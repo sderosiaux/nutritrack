@@ -6,7 +6,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { db, exercises } from "@/server/db";
-import { eq, like, and } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 
 type Env = { Variables: { session: { user: { id: string; email: string; name?: string } } | null } };

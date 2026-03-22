@@ -19,7 +19,7 @@ type CaptureState =
   | { mode: "polling"; jobId: string }
   | { mode: "done" };
 
-export function PhotoCapture({ onFoodsDetected, mealType, date }: PhotoCaptureProps) {
+export function PhotoCapture({ onFoodsDetected, mealType: _mealType, date: _date }: PhotoCaptureProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);

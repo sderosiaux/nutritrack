@@ -233,7 +233,6 @@ describe("CHK-009: searchFoods service — real function, DB-only mock", () => {
     await searchFoods({ q: "chicken breast", limit: 20, offset: 0 }); // 2 words → FTS path
 
     // chain1.where is a vi.fn() — first call receives the searchCond SQL expression
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const whereArg = (chain1 as any).where.mock.calls[0]?.[0];
     expect(whereArg, "no argument passed to .where()").toBeDefined();
 
@@ -252,7 +251,6 @@ describe("CHK-009: searchFoods service — real function, DB-only mock", () => {
 
     await searchFoods({ q: "chicken", limit: 20, offset: 0 }); // 1 word → ILIKE only
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const whereArg = (chain1 as any).where.mock.calls[0]?.[0];
     const serialized = JSON.stringify(whereArg);
     expect(serialized, "Single-word query should not use FTS").not.toContain("to_tsvector");
@@ -268,7 +266,6 @@ describe("CHK-009: searchFoods service — real function, DB-only mock", () => {
     // French query — single word, so only ILIKE path, but nameTranslations must always be there
     await searchFoods({ q: "poulet", limit: 20, offset: 0 });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const whereArg = (chain1 as any).where.mock.calls[0]?.[0];
     const serialized = JSON.stringify(whereArg);
     // The JSONB cast expression `::text ILIKE` must appear in the SQL string chunks

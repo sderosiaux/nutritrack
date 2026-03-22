@@ -9,7 +9,6 @@ import {
   decimal,
   integer,
   pgEnum,
-  index,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { user } from "./auth";

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -20,6 +21,7 @@ const registerSchema = z.object({
 type RegisterInput = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
+  const router = useRouter();
   const {
     register,
     handleSubmit,
@@ -38,7 +40,7 @@ export default function RegisterPage() {
       if (userId) {
         await upgradeGuestAccount(userId);
       }
-      window.location.href = "/onboarding";
+      router.push("/onboarding");
     }
   }
 

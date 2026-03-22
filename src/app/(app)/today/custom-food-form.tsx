@@ -19,10 +19,10 @@ const customFoodSchema = z.object({
   servingLabel: z.string().min(1, "Serving label required"),
   servingGrams: z.coerce.number().positive("Must be positive"),
   calories: z.coerce.number().min(0, "Cannot be negative"),
-  protein: z.coerce.number().min(0).default(0),
-  carbs: z.coerce.number().min(0).default(0),
-  fat: z.coerce.number().min(0).default(0),
-  fiber: z.coerce.number().min(0).default(0),
+  protein: z.coerce.number().min(0),
+  carbs: z.coerce.number().min(0),
+  fat: z.coerce.number().min(0),
+  fiber: z.coerce.number().min(0),
 });
 
 type CustomFoodFormData = z.infer<typeof customFoodSchema>;

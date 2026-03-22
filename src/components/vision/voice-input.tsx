@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 interface VoiceInputProps {
   onTranscript: (text: string) => void;
@@ -37,16 +37,13 @@ interface SpeechRecognitionEvent {
   resultIndex: number;
 }
 
-export function VoiceInput({ onTranscript, placeholder = "Speak to add food..." }: VoiceInputProps) {
-  const [supported, setSupported] = useState<boolean | null>(null);
+export function VoiceInput({ onTranscript, placeholder: _placeholder = "Speak to add food..." }: VoiceInputProps) {
+  const [supported] = useState<boolean | null>(() =>
+    typeof window === "undefined" ? null : getSpeechRecognition() !== null
+  );
   const [listening, setListening] = useState(false);
   const [interimText, setInterimText] = useState("");
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
-
-  useEffect(() => {
-    const SpeechRecognitionClass = getSpeechRecognition();
-    setSupported(SpeechRecognitionClass !== null);
-  }, []);
 
   function startListening() {
     const SpeechRecognitionClass = getSpeechRecognition();

@@ -8,8 +8,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock DB at a low level to capture what the service queries
-const mockMealEntryRows: Array<{ foodId: string | null }> = [];
-const mockFoodRows: Array<{
+const _mockMealEntryRows: Array<{ foodId: string | null }> = [];
+const _mockFoodRows: Array<{
   id: string; name: string; brandName: string | null;
   caloriesPer100g: string; proteinPer100g: string; carbsPer100g: string;
   fatPer100g: string; fiberPer100g: string; source: string; verified: boolean;
@@ -63,7 +63,7 @@ describe("CHK-010: getRecentFoods — user-scoped meal_entries query", () => {
   });
 
   it("queries meal_entries for user-scoped recently logged food IDs", async () => {
-    const { db, mealEntries } = await import("@/server/db");
+    const { db, mealEntries: _mealEntries } = await import("@/server/db");
 
     // Set up selectDistinct to return meal entry rows for the user
     vi.mocked(db.selectDistinct).mockReturnValue(
@@ -84,7 +84,7 @@ describe("CHK-010: getRecentFoods — user-scoped meal_entries query", () => {
     );
 
     const { getRecentFoods } = await import("@/server/services/food-service");
-    const results = await getRecentFoods("user-123", 20);
+    await getRecentFoods("user-123", 20);
 
     // Verify selectDistinct was called (= meal_entries was queried)
     expect(db.selectDistinct).toHaveBeenCalled();
@@ -144,9 +144,9 @@ describe("CHK-010: getRecentFoods — user-scoped meal_entries query", () => {
   it("passes userId to meal_entries query (user-scoped, not global)", async () => {
     const { db } = await import("@/server/db");
 
-    let capturedArgs: unknown;
+    let _capturedArgs: unknown;
     vi.mocked(db.selectDistinct).mockImplementation((args) => {
-      capturedArgs = args;
+      _capturedArgs = args;
       return makeChain([]) as never;
     });
     vi.mocked(db.select).mockReturnValue(makeChain([]) as never);

@@ -21,7 +21,6 @@ import {
   createJob,
   getJob,
   updateJob,
-  type JobStatus,
 } from "@/server/services/vision-queue";
 
 const mockSession = { user: { id: "user-1", email: "test@example.com" } };

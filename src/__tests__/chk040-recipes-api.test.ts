@@ -82,7 +82,7 @@ function makeInsertChain(resolveWith: unknown) {
   return chain;
 }
 
-function makeUpdateChain() {
+function _makeUpdateChain() {
   const chain: Record<string, unknown> = {};
   chain.set = vi.fn().mockReturnValue(chain);
   chain.where = vi.fn().mockReturnValue(chain);

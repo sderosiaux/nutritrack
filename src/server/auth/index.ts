@@ -65,6 +65,9 @@ export const auth = new Proxy({} as ReturnType<typeof createAuth>, {
   get(_target, prop) {
     return getAuth()[prop as keyof ReturnType<typeof createAuth>];
   },
+  has(_target, prop) {
+    return prop in getAuth();
+  },
 });
 
 export type Auth = ReturnType<typeof createAuth>;

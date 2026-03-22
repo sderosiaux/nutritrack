@@ -36,7 +36,7 @@ function makeChain(resolveWith: unknown) {
   return chain;
 }
 
-function makeInsertChain(resolveWith: unknown) {
+function _makeInsertChain(resolveWith: unknown) {
   const chain: Record<string, unknown> = {};
   chain.values = vi.fn().mockReturnValue(chain);
   chain.onConflictDoNothing = vi.fn().mockReturnValue(chain);

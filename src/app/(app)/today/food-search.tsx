@@ -32,7 +32,7 @@ interface FoodSearchProps {
   date: string;
 }
 
-export function FoodSearch({ onSelect, mealType, date }: FoodSearchProps) {
+export function FoodSearch({ onSelect, mealType, date: _date }: FoodSearchProps) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<SearchFilter>("all");
   const [results, setResults] = useState<FoodSearchResult[]>([]);
@@ -240,7 +240,7 @@ export function FoodSearch({ onSelect, mealType, date }: FoodSearchProps) {
         )}
         {!loading && query && results.length === 0 && (
           <p style={{ fontSize: 13, color: "var(--color-text-muted)", padding: "8px 0" }}>
-            No results for "{query}"
+            No results for &quot;{query}&quot;
           </p>
         )}
         {results.map((food) => (

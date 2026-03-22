@@ -159,7 +159,7 @@ describe("CHK-009: Food search API (route layer)", () => {
 // These tests verify the ranking semantics without any DB interaction.
 
 describe("CHK-009: rankSearchResults ranking logic", () => {
-  const makeFood = (overrides: Partial<typeof MOCK_FOOD_ITEM> & { id: string }) => ({
+  const _makeFood = (overrides: Partial<typeof MOCK_FOOD_ITEM> & { id: string }) => ({
     ...MOCK_FOOD_ITEM,
     ...overrides,
   });
@@ -265,7 +265,7 @@ describe("CHK-009: rankSearchResults pure function", async () => {
   it("exact name match ranks before verified non-exact", () => {
     // food-exact: "chicken breast" === "chicken breast" → exact
     // food-verified: "Chicken Breast, raw" → NOT exact
-    const recentIds = new Set<string>();
+    const _recentIds = new Set<string>();
     const q = "chicken breast";
 
     // Use only the two verified foods (no recent, no branded to keep ranking clear)
@@ -287,8 +287,8 @@ describe("CHK-009: rankSearchResults pure function", async () => {
 
   it("verified foods rank before branded unverified", () => {
     const items = [foods[0], foods[1]]; // branded-unverified, verified-generic
-    const recentIds = new Set<string>();
-    const q = "chicken";
+    const _recentIds = new Set<string>();
+    const _q = "chicken";
 
     const sorted = [...items].sort((a, b) => {
       const aVer = a.verified ? 0 : 1;

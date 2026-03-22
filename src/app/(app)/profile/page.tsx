@@ -137,7 +137,7 @@ function DeleteAccountDialog({
   );
 }
 
-export function ProfilePage() {
+function ProfilePage() {
   const queryClient = useQueryClient();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 

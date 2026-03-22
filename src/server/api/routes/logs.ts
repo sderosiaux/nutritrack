@@ -413,13 +413,13 @@ router.post("/quick-add", async (c) => {
 
   for (const item of parsedItems) {
     try {
-      const results = await searchFoods({ query: item.query, userId, limit: 1 });
-      if (results.length === 0) {
+      const results = await searchFoods({ q: item.query, userId, limit: 1, offset: 0 });
+      if (results.items.length === 0) {
         unmatched.push(item.originalText);
         continue;
       }
 
-      const food = results[0];
+      const food = results.items[0];
       const servingGrams = food.servingSizes[0]?.weightG ?? 100;
       const grams = estimateGrams(item, servingGrams);
 

@@ -6,7 +6,7 @@
  * Shows once per week, can be dismissed forever.
  */
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 const STORAGE_KEY = "nutritrack-weekly-checkin";
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -48,12 +48,9 @@ const EMOJI_OPTIONS = [
 ];
 
 export function WeeklyCheckinModal() {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const state = loadState();
-    setVisible(shouldShow(state));
-  }, []);
+  const [visible, setVisible] = useState(() =>
+    typeof window === "undefined" ? false : shouldShow(loadState())
+  );
 
   const handleResponse = (value: string) => {
     saveState({ lastCheckin: new Date().toISOString(), lastResponse: value });

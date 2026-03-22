@@ -3,7 +3,7 @@
  * PostgreSQL 16, Redis, MinIO, Ollama (optional), app service with hot-reload
  */
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 
 const root = join(__dirname, "../../");
@@ -65,7 +65,6 @@ describe("CHK-002: Hot-reload support", () => {
   });
 
   it("Dockerfile.dev exists for dev container", () => {
-    const { existsSync } = require("fs");
     const dockerfilePath = join(root, "Dockerfile.dev");
     expect(existsSync(dockerfilePath), "Dockerfile.dev not found").toBe(true);
   });

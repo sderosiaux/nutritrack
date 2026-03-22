@@ -40,18 +40,21 @@ let webPush: {
   sendNotification: (sub: PushSubscriptionData, payload: string) => Promise<{ statusCode: number }>;
 } | null = null;
 
-// Attempt to load web-push if available
-try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  webPush = require("web-push");
-  const vapidPublic = process.env.VAPID_PUBLIC_KEY ?? "";
-  const vapidPrivate = process.env.VAPID_PRIVATE_KEY ?? "";
-  const vapidSubject = process.env.VAPID_SUBJECT ?? "mailto:admin@nutritrack.local";
-  if (vapidPublic && vapidPrivate) {
-    webPush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
+// Attempt to load web-push if available AND VAPID keys are configured
+const vapidPublic = process.env.VAPID_PUBLIC_KEY ?? "";
+const vapidPrivate = process.env.VAPID_PRIVATE_KEY ?? "";
+const vapidSubject = process.env.VAPID_SUBJECT ?? "mailto:admin@nutritrack.local";
+
+if (vapidPublic && vapidPrivate) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    webPush = require(/* webpackIgnore: true */ "web-push");
+    if (webPush) {
+      webPush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
+    }
+  } catch {
+    // web-push not installed — use stub mode
   }
-} catch {
-  // web-push not installed — use stub mode
 }
 
 /**

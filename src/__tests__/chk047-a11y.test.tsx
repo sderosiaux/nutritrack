@@ -3,7 +3,6 @@
  * CHK-047: WCAG AA accessibility audit
  * Tests: skip nav link, aria-live regions, 44px touch targets, focus rings.
  */
-import { render, screen } from "@testing-library/react";
 import { readFileSync } from "fs";
 import { join } from "path";
 

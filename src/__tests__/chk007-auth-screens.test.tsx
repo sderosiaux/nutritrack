@@ -59,7 +59,7 @@ describe("CHK-007: S-AUTH-4 Login screen", () => {
 
   it("renders password input", () => {
     render(<LoginPage />);
-    const inputs = screen.getAllByRole("textbox");
+    const _inputs = screen.getAllByRole("textbox");
     const pwInput =
       (document.querySelector('input[type="password"]') as HTMLInputElement | null);
     expect(pwInput).toBeTruthy();

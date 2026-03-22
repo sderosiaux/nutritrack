@@ -11,7 +11,7 @@ vi.stubGlobal("fetch", mockFetch);
 
 vi.mock("@/server/db", () => ({ db: {} }));
 
-import { analyzeImage, type ParsedFood } from "@/server/services/vision-service";
+import { analyzeImage } from "@/server/services/vision-service";
 
 describe("CHK-029 — Vision service: Ollama provider", () => {
   const originalEnv = process.env;

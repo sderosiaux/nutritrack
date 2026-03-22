@@ -3,7 +3,7 @@
  * No @hono/zod-validator — manual safeParse + 422 at route level.
  */
 import { db, recipes, recipeIngredients, favoriteRecipes, mealEntries } from "@/server/db";
-import { eq, and, or, ilike, desc, inArray, count, sql } from "drizzle-orm";
+import { eq, and, or, ilike, desc, inArray, count } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -336,11 +336,7 @@ export async function getFavoriteRecipes(userId: string): Promise<RecipeSummary[
 
 // ── Log as Meal ────────────────────────────────────────────────────────────
 
-const VALID_MEAL_SLOTS = [
-  "breakfast", "morning_snack", "lunch", "afternoon_snack",
-  "dinner", "evening_snack", "other",
-] as const;
-type MealSlot = typeof VALID_MEAL_SLOTS[number];
+type MealSlot = "breakfast" | "morning_snack" | "lunch" | "afternoon_snack" | "dinner" | "evening_snack" | "other";
 
 export async function logRecipeAsMeal(
   userId: string,

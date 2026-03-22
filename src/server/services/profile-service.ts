@@ -110,7 +110,6 @@ export async function getProfile(userId: string) {
   if (!profile) return null;
 
   // Get latest targets
-  const today = new Date().toISOString().split("T")[0];
   const targets = await db
     .select()
     .from(dailyTargets)

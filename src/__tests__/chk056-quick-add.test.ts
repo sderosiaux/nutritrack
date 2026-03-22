@@ -16,7 +16,7 @@ vi.mock("@/server/services/log-service", () => ({
   createMealEntry: vi.fn(),
 }));
 
-import { parseQuickAdd, type ParsedItem } from "@/server/services/quick-add-service";
+import { parseQuickAdd } from "@/server/services/quick-add-service";
 import { getSessionFromRequest } from "@/server/auth";
 import { searchFoods } from "@/server/services/food-service";
 import { createMealEntry } from "@/server/services/log-service";
@@ -137,7 +137,7 @@ describe("CHK-056 — POST /api/v1/logs/quick-add", () => {
       servingSizes: [{ id: "ss-1", label: "1 egg", grams: 50 }],
     };
 
-    vi.mocked(searchFoods).mockResolvedValue([mockFood] as never);
+    vi.mocked(searchFoods).mockResolvedValue({ items: [mockFood], total: 1 } as never);
     vi.mocked(createMealEntry).mockResolvedValue({
       id: "entry-1",
       foodId: "food-123",
@@ -162,7 +162,7 @@ describe("CHK-056 — POST /api/v1/logs/quick-add", () => {
   });
 
   it("returns unmatched items when no food found", async () => {
-    vi.mocked(searchFoods).mockResolvedValue([] as never);
+    vi.mocked(searchFoods).mockResolvedValue({ items: [], total: 0 } as never);
 
     const req = new Request("http://localhost/api/v1/logs/quick-add", {
       method: "POST",
@@ -183,7 +183,7 @@ describe("CHK-056 — POST /api/v1/logs/quick-add", () => {
 
   it("handles multiple items — some matched, some not", async () => {
     vi.mocked(searchFoods)
-      .mockResolvedValueOnce([{
+      .mockResolvedValueOnce({ items: [{
         id: "food-1",
         name: "Eggs",
         caloriesPer100g: 155,
@@ -192,8 +192,8 @@ describe("CHK-056 — POST /api/v1/logs/quick-add", () => {
         fatPer100g: 11,
         fiberPer100g: 0,
         servingSizes: [{ id: "ss-1", label: "1 egg", grams: 50 }],
-      }] as never)
-      .mockResolvedValueOnce([] as never);
+      }], total: 1 } as never)
+      .mockResolvedValueOnce({ items: [], total: 0 } as never);
 
     vi.mocked(createMealEntry).mockResolvedValue({ id: "e-1" } as never);
 
