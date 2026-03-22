@@ -372,7 +372,7 @@
   lane: 9
   status: "DONE"
   test: "src/__tests__/chk033-analytics-summary.test.ts"
-  commit: "pending"
+  commit: "27e5b4d"
 
 - id: "CHK-034"
   description: "Analytics charts UI (S-PROGRESS-1): time range picker (7d/30d/3m/1y), calorie bar chart + target line, macro stacked area, weight scatter + trend line, nutrient coverage horizontal bars (vs RDA), water intake trend, meal timing heatmap (when in day user eats). Empty state when <3 days logged: 'Log for 3+ days to see trends' + Go to journal CTA."
@@ -381,7 +381,7 @@
   lane: 9
   status: "DONE"
   test: "src/__tests__/chk034-analytics-foods.test.ts"
-  commit: "pending"
+  commit: "27e5b4d"
 
 - id: "CHK-035"
   description: "Streak calculation engine: rule = ≥1 food entry logged = streak day (no calorie-target pressure). Badge on dashboard header with bounce + subtle confetti on new streak day."
@@ -390,7 +390,7 @@
   lane: 9
   status: "DONE"
   test: "src/__tests__/chk035-progress-ui.test.tsx"
-  commit: "pending"
+  commit: "27e5b4d"
 
 - id: "CHK-036"
   description: "Data export API + UI: GET /api/v1/export/json, /csv — full user data. Export button on S-PROFILE-3."
@@ -399,7 +399,7 @@
   lane: 9
   status: "DONE"
   test: "src/__tests__/chk036-data-export.test.ts"
-  commit: "pending"
+  commit: "27e5b4d"
 
 - id: "CHK-054"
   description: "Nutrient deep-dive screen (S-PROGRESS-2): nutrient selector (macro or micro), daily breakdown chart, top food sources for selected nutrient. Linked from nutrient coverage bars in S-PROGRESS-1."
@@ -408,7 +408,7 @@
   lane: 9
   status: "DONE"
   test: "src/__tests__/chk054-streak-engine.test.ts"
-  commit: "pending"
+  commit: "27e5b4d"
 
 # ── M5: Coach / Content ────────────────────────────────────────
 
