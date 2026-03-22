@@ -166,7 +166,7 @@
   lane: 5
   status: "DONE"
   test: "src/__tests__/chk015-dashboard.test.tsx"
-  commit: null
+  commit: "cdf14af"
 
 - id: "CHK-016"
   description: "Food search UI (S-LOG-6, S-LOG-7): search bar (autofocus), filter chips (All/My Foods/Branded/Generic), results list with name/brand/kcal, serving picker dropdown, quantity input, live macro preview, meal slot selector, add button"
@@ -175,7 +175,7 @@
   lane: 5
   status: "DONE"
   test: "src/__tests__/chk016-food-search.test.tsx"
-  commit: null
+  commit: "cdf14af"
 
 - id: "CHK-017"
   description: "Log entry point modal (S-LOG-1): bottom sheet on mobile / side panel on tablet+, 4 options (Photo/Barcode/Search/Voice), recent entries (last 5, tap to re-log), favorite foods"
@@ -184,7 +184,7 @@
   lane: 5
   status: "DONE"
   test: "src/__tests__/chk017-log-entry-modal.test.tsx"
-  commit: null
+  commit: "cdf14af"
 
 - id: "CHK-018"
   description: "Journal/food log screen (S-JOURNAL-1): calendar strip (weekly view), day totals (kcal/protein/carbs/fat), meals accordion (breakfast/lunch/dinner/snacks), full nutrition line per entry, edit/delete per entry, copy day to today, pull-to-refresh; empty state: 'Start your day — log your first meal' + Log food CTA"
@@ -193,7 +193,7 @@
   lane: 5
   status: "DONE"
   test: "src/__tests__/chk018-journal.test.tsx"
-  commit: null
+  commit: "cdf14af"
 
 - id: "CHK-032"
   description: "Barcode scanner UI (S-LOG-4, S-LOG-5): camera viewfinder with ZXing barcode overlay, 'Enter barcode manually' fallback, product detail sheet (name/brand, nutrition per 100g + per serving, serving picker, quantity input, meal slot selector, add button)"
@@ -202,7 +202,7 @@
   lane: 5
   status: "DONE"
   test: "src/__tests__/chk032-barcode-scanner.test.tsx"
-  commit: null
+  commit: "cdf14af"
 
 - id: "CHK-052"
   description: "Custom food creation screen (S-LOG-9): form with name, brand (optional), serving size label + weight, nutrition per 100g (calories, protein, carbs, fat, fiber, sugar, sodium optional). Saves to 'My Foods' (source=user_created). Accessible from food search results when food not found."
@@ -211,7 +211,7 @@
   lane: 5
   status: "DONE"
   test: "src/__tests__/chk052-custom-food-form.test.tsx"
-  commit: null
+  commit: "cdf14af"
 
 # ── M2: Profile & Personalization ──────────────────────────────
 
