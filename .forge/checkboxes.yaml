@@ -475,7 +475,7 @@
   lane: 12
   status: "DONE"
   test: "src/__tests__/chk043-pwa-manifest.test.ts src/__tests__/chk043-install-prompt.test.tsx"
-  commit: null
+  commit: "3848937"
 
 - id: "CHK-044"
   description: "Background sync + Dexie.js offline store: queue log entries while offline, sync to server on reconnect, offline indicator banner when no connection"
@@ -484,7 +484,7 @@
   lane: 12
   status: "DONE"
   test: "src/__tests__/chk044-offline-sync.test.ts"
-  commit: null
+  commit: "3848937"
 
 - id: "CHK-045"
   description: "Push notifications: per-slot meal reminders (configurable schedule from CHK-022 settings), weekly check-in prompt"
@@ -493,7 +493,7 @@
   lane: 12
   status: "DONE"
   test: "src/__tests__/chk045-push-notifications.test.ts"
-  commit: null
+  commit: "3848937"
 
 - id: "CHK-057"
   description: "Email jobs via Nodemailer + SMTP: BullMQ daily-reminder-email job (morning summary of yesterday + today goal) and weekly-summary-email job (weekly progress digest). Distinct from push notifications — email channel."
@@ -502,7 +502,7 @@
   lane: 12
   status: "DONE"
   test: "src/__tests__/chk057-email-jobs.test.ts"
-  commit: null
+  commit: "3848937"
 
 - id: "CHK-046"
   description: "Animations + transitions: page fade (150ms), list stagger-fade (30ms/item), calorie ring fill on mount (0→current, 600ms ease-out), number count animation on kcal updates after logging, toast slide-up (auto-dismiss 3s), bottom sheet spring (cubic-bezier(0.32,0.72,0,1)), milestone celebrations (streak record, goal reached — bounce + confetti). All wrapped in prefers-reduced-motion guard."
