@@ -29,10 +29,10 @@ function chunk<T>(arr: T[], size: number): T[][] {
 /** Insert seed foods + serving sizes into the database. Skips if bulk data already present. */
 export async function seedFoods(db: InsertableDb): Promise<void> {
   // Skip seed foods if bulk data:sync has already loaded >50k foods
-  const countDb = db as unknown as { select: (q: { count: unknown }) => { from: (t: unknown) => Promise<{ count: number }[]> } };
   try {
-    const pg = await import("drizzle-orm");
-    const [row] = await (db as never as import("drizzle-orm/postgres-js").PostgresJsDatabase).select({ count: pg.sql<number>`count(*)` }).from(foods);
+    const { sql } = await import("drizzle-orm");
+    const [row] = await (db as unknown as { execute: (q: unknown) => Promise<{ count: number }[]> })
+      .execute(sql`SELECT count(*) as count FROM foods`);
     if (Number(row?.count ?? 0) > 50_000) {
       console.log("Seed: skipping foods (bulk data already loaded)");
       return;

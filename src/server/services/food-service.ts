@@ -133,7 +133,8 @@ export async function searchFoods(params: {
   const isMultiWord = trimmed.split(/\s+/).length >= 2;
 
   const ftsCondition = sql`${foods}.search_vector @@ websearch_to_tsquery('english', ${trimmed})`;
-  const trgmCondition = sql`similarity(${foods.name}, ${trimmed}) > 0.15`;
+  // Use % operator (GIN-indexed) instead of similarity() function (seq scan)
+  const trgmCondition = sql`${foods.name} % ${trimmed}`;
 
   const searchCond = isMultiWord ? ftsCondition : or(ftsCondition, trgmCondition);
 
@@ -146,20 +147,16 @@ export async function searchFoods(params: {
       )`;
 
   const rows = await db
-    .select()
+    .select({ food: foods, total: sql<number>`count(*) OVER()` })
     .from(foods)
     .where(searchCond)
     .orderBy(sql`${rankExpr} DESC`)
     .limit(limit)
     .offset(offset);
 
-  const countRow = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(foods)
-    .where(searchCond);
-
-  const total = Number(countRow[0]?.count ?? 0);
-  const ssMap = await loadServingSizes(rows.map((r) => r.id));
+  const total = rows.length > 0 ? Number(rows[0].total) : 0;
+  const foodRows = rows.map(r => r.food);
+  const ssMap = await loadServingSizes(foodRows.map((r) => r.id));
 
   // Get user's recently logged food IDs for ranking boost
   let recentIds = new Set<string>();
@@ -178,7 +175,7 @@ export async function searchFoods(params: {
     );
   }
 
-  const items = rows.map((r) => rowToSearchItem(r, ssMap.get(r.id) ?? []));
+  const items = foodRows.map((r) => rowToSearchItem(r, ssMap.get(r.id) ?? []));
   const ranked = rankSearchResults(items, q, recentIds);
 
   return { items: ranked, total };

@@ -9,11 +9,10 @@
  *   pnpm data:sync --source=usda      # USDA only
  *   pnpm data:sync --limit=1000       # test with first N rows
  */
-import { createReadStream, createWriteStream, existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
-import { pipeline } from "stream/promises";
+import { createReadStream, createWriteStream, existsSync, mkdirSync, readFileSync, writeFileSync, rmSync, renameSync } from "fs";
 import { createGunzip } from "zlib";
 import { parse } from "csv-parse";
-import { Writable, Transform } from "stream";
+import { execFileSync } from "child_process";
 import postgres from "postgres";
 import { join } from "path";
 
@@ -58,6 +57,7 @@ const USDA_CSV_URL = "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_csv
 const DATA_DIR = join(process.cwd(), "data");
 const META_FILE = join(DATA_DIR, ".sync-meta.json");
 const BATCH_SIZE = 5000;
+const MAX_DOWNLOAD_SIZE = 10 * 1024 * 1024 * 1024; // 10GB hard limit
 
 // USDA nutrient IDs
 const NUTRIENT_ENERGY = 1008;
@@ -112,6 +112,8 @@ export function parseOffRow(row: Record<string, string>): FoodRow | null {
   // Skip rows with no calorie data at all
   if (cal === 0 && !row["energy-kcal_100g"]) return null;
 
+  const sodiumG = numOrNull(row["sodium_100g"]);
+
   return {
     id: `off-${code}`,
     name,
@@ -125,9 +127,7 @@ export function parseOffRow(row: Record<string, string>): FoodRow | null {
     fatPer100g: num(row["fat_100g"]),
     fiberPer100g: num(row["fiber_100g"]),
     sugarPer100g: numOrNull(row["sugars_100g"]),
-    sodiumMgPer100g: numOrNull(row["sodium_100g"]) !== null
-      ? (numOrNull(row["sodium_100g"])! * 1000) // OFF stores in g, we store in mg
-      : null,
+    sodiumMgPer100g: sodiumG !== null ? sodiumG * 1000 : null,
     saturatedFatPer100g: numOrNull(row["saturated-fat_100g"]),
     category: row["categories_en"]?.split(",")[0]?.trim() || null,
     verified: false,
@@ -139,7 +139,9 @@ export function parseOffServing(row: Record<string, string>): ServingRow | null 
   const servingSize = row["serving_size"]?.trim();
   if (!code || !servingSize) return null;
 
-  const weightG = parseFloat(servingSize);
+  // Try extracting gram value from parentheses first: "1 cup (240g)" → 240
+  const gramMatch = servingSize.match(/\((\d+(?:\.\d+)?)\s*g\)/i);
+  const weightG = gramMatch ? parseFloat(gramMatch[1]) : parseFloat(servingSize);
   if (isNaN(weightG) || weightG <= 0) return null;
 
   return {
@@ -153,7 +155,7 @@ export function parseOffServing(row: Record<string, string>): ServingRow | null 
 // ── USDA Parsing ──────────────────────────────────────────────────────────
 
 export function parseUsdaFood(
-  food: { fdc_id: string; description: string; food_category_id?: string },
+  food: { fdc_id: string; description: string },
   nutrients: Record<number, number>
 ): FoodRow {
   return {
@@ -176,9 +178,43 @@ export function parseUsdaFood(
   };
 }
 
+// ── Batch Accumulator ────────────────────────────────────────────────────
+
+class BatchAccumulator {
+  private foodBatch: FoodRow[] = [];
+  private servingBatch: ServingRow[] = [];
+  private imported = 0;
+
+  constructor(
+    private sql: postgres.Sql,
+    private tag: string,
+    private start: number,
+  ) {}
+
+  get count(): number { return this.imported; }
+
+  async add(food: FoodRow, servings: ServingRow[] = []): Promise<void> {
+    this.foodBatch.push(food);
+    this.servingBatch.push(...servings);
+    if (this.foodBatch.length >= BATCH_SIZE) await this.flush();
+  }
+
+  async flush(): Promise<void> {
+    if (this.foodBatch.length === 0) return;
+    await insertFoodBatch(this.sql, this.foodBatch);
+    if (this.servingBatch.length > 0) await insertServingBatch(this.sql, this.servingBatch);
+    this.imported += this.foodBatch.length;
+    this.foodBatch = [];
+    this.servingBatch = [];
+    if (this.imported % 100_000 === 0) {
+      console.log(`[${this.tag}] ${this.imported.toLocaleString()} rows staged (${elapsed(this.start)})`);
+    }
+  }
+}
+
 // ── Database Operations ──────────────────────────────────────────────────
 
-async function createStagingTables(sql: postgres.Sql): Promise<void> {
+async function resetStagingTables(sql: postgres.Sql): Promise<void> {
   await sql`
     CREATE TEMPORARY TABLE IF NOT EXISTS foods_staging (
       id text PRIMARY KEY,
@@ -199,7 +235,6 @@ async function createStagingTables(sql: postgres.Sql): Promise<void> {
       verified boolean NOT NULL DEFAULT false
     ) ON COMMIT PRESERVE ROWS
   `;
-
   await sql`
     CREATE TEMPORARY TABLE IF NOT EXISTS serving_sizes_staging (
       id text PRIMARY KEY,
@@ -208,6 +243,8 @@ async function createStagingTables(sql: postgres.Sql): Promise<void> {
       weight_g numeric(7,2) NOT NULL
     ) ON COMMIT PRESERVE ROWS
   `;
+  await sql`TRUNCATE foods_staging`;
+  await sql`TRUNCATE serving_sizes_staging`;
 }
 
 async function insertFoodBatch(sql: postgres.Sql, rows: FoodRow[]): Promise<void> {
@@ -262,9 +299,23 @@ async function insertServingBatch(sql: postgres.Sql, rows: ServingRow[]): Promis
   `;
 }
 
-async function upsertFromStaging(sql: postgres.Sql): Promise<{ foods: number; servings: number }> {
+async function dropSearchIndexes(sql: postgres.Sql): Promise<void> {
+  await sql`DROP INDEX IF EXISTS foods_search_vector_idx`;
+  await sql`DROP INDEX IF EXISTS foods_name_trgm_idx`;
+  await sql`DROP INDEX IF EXISTS foods_brand_trgm_idx`;
+}
+
+async function rebuildSearchIndexes(sql: postgres.Sql): Promise<void> {
+  console.log("Rebuilding GIN indexes...");
+  await sql`CREATE INDEX foods_search_vector_idx ON foods USING gin (search_vector)`;
+  await sql`CREATE INDEX foods_name_trgm_idx ON foods USING gin (name gin_trgm_ops)`;
+  await sql`CREATE INDEX foods_brand_trgm_idx ON foods USING gin (brand_name gin_trgm_ops)`;
+  console.log("GIN indexes rebuilt");
+}
+
+async function upsertFromStaging(sql: postgres.Sql): Promise<void> {
   // Upsert foods (never overwrite user_created)
-  const [foodResult] = await sql`
+  await sql`
     INSERT INTO foods (
       id, name, brand_name, barcode, source, source_id,
       calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g,
@@ -296,18 +347,13 @@ async function upsertFromStaging(sql: postgres.Sql): Promise<{ foods: number; se
   `;
 
   // Upsert serving sizes
-  const [servingResult] = await sql`
+  await sql`
     INSERT INTO serving_sizes (id, food_id, label, weight_g)
     SELECT id, food_id, label, weight_g FROM serving_sizes_staging
     ON CONFLICT (id) DO UPDATE SET
       label = EXCLUDED.label,
       weight_g = EXCLUDED.weight_g
   `;
-
-  return {
-    foods: Number(foodResult?.count ?? 0),
-    servings: Number(servingResult?.count ?? 0),
-  };
 }
 
 // ── Download with ETag ───────────────────────────────────────────────────
@@ -320,7 +366,7 @@ async function downloadWithEtag(
   const headers: Record<string, string> = {};
   if (etag) headers["If-None-Match"] = etag;
 
-  const res = await fetch(url, { headers });
+  const res = await fetch(url, { headers, redirect: "error" });
 
   if (res.status === 304) {
     console.log(`  Skipped (304 Not Modified)`);
@@ -332,29 +378,47 @@ async function downloadWithEtag(
   const newEtag = res.headers.get("etag") ?? undefined;
   const totalBytes = Number(res.headers.get("content-length") ?? 0);
 
+  if (totalBytes > MAX_DOWNLOAD_SIZE) {
+    throw new Error(`Download too large: ${totalBytes} bytes exceeds ${MAX_DOWNLOAD_SIZE} limit`);
+  }
+
   console.log(`  Downloading ${totalBytes > 0 ? `${(totalBytes / 1e9).toFixed(1)}GB` : "unknown size"}...`);
 
-  const fileStream = createWriteStream(destPath);
+  // Write to temp file, rename on success (atomic)
+  const tmpPath = destPath + ".tmp";
+  const fileStream = createWriteStream(tmpPath);
   const reader = res.body?.getReader();
   if (!reader) throw new Error("No response body");
 
   let downloaded = 0;
   let lastLog = 0;
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    fileStream.write(value);
-    downloaded += value.length;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
 
-    // Log progress every 100MB
-    if (downloaded - lastLog > 100_000_000) {
-      const pct = totalBytes > 0 ? ((downloaded / totalBytes) * 100).toFixed(1) : "?";
-      console.log(`  ${(downloaded / 1e6).toFixed(0)}MB downloaded (${pct}%)`);
-      lastLog = downloaded;
+      // Respect backpressure
+      const ok = fileStream.write(value);
+      if (!ok) await new Promise<void>(resolve => fileStream.once("drain", resolve));
+
+      downloaded += value.length;
+      if (downloaded > MAX_DOWNLOAD_SIZE) throw new Error("Download exceeded size limit during transfer");
+
+      if (downloaded - lastLog > 100_000_000) {
+        const pct = totalBytes > 0 ? ((downloaded / totalBytes) * 100).toFixed(1) : "?";
+        console.log(`  ${(downloaded / 1e6).toFixed(0)}MB downloaded (${pct}%)`);
+        lastLog = downloaded;
+      }
     }
+    fileStream.end();
+    await new Promise<void>((resolve) => fileStream.on("finish", resolve));
+    renameSync(tmpPath, destPath);
+  } catch (err) {
+    reader.cancel().catch(() => {});
+    fileStream.destroy();
+    try { rmSync(tmpPath, { force: true }); } catch {}
+    throw err;
   }
-  fileStream.end();
-  await new Promise<void>((resolve) => fileStream.on("finish", resolve));
 
   console.log(`  Download complete: ${(downloaded / 1e6).toFixed(0)}MB`);
   return { path: destPath, etag: newEtag, skipped: false };
@@ -375,22 +439,15 @@ async function importOff(sql: postgres.Sql, limit: number): Promise<number> {
     return 0;
   }
 
-  meta.off = { etag: dl.etag, lastSync: new Date().toISOString() };
-  saveMeta(meta);
-
-  await createStagingTables(sql);
-  await sql`TRUNCATE foods_staging`;
-  await sql`TRUNCATE serving_sizes_staging`;
+  await resetStagingTables(sql);
 
   let processed = 0;
-  let imported = 0;
-  let foodBatch: FoodRow[] = [];
-  let servingBatch: ServingRow[] = [];
+  const batch = new BatchAccumulator(sql, "OFF", start);
 
   const csvStream = createReadStream(destPath)
     .pipe(createGunzip())
     .pipe(parse({
-      delimiter: "\t", // OFF uses TSV
+      delimiter: "\t",
       columns: true,
       relax_quotes: true,
       relax_column_count: true,
@@ -405,38 +462,22 @@ async function importOff(sql: postgres.Sql, limit: number): Promise<number> {
     const food = parseOffRow(row as Record<string, string>);
     if (!food) continue;
 
-    foodBatch.push(food);
-
     const serving = parseOffServing(row as Record<string, string>);
-    if (serving) servingBatch.push(serving);
-
-    if (foodBatch.length >= BATCH_SIZE) {
-      await insertFoodBatch(sql, foodBatch);
-      if (servingBatch.length > 0) await insertServingBatch(sql, servingBatch);
-      imported += foodBatch.length;
-      foodBatch = [];
-      servingBatch = [];
-
-      if (imported % 100_000 === 0) {
-        console.log(`[OFF] ${imported.toLocaleString()} rows staged (${elapsed(start)})`);
-      }
-    }
+    await batch.add(food, serving ? [serving] : []);
   }
+  await batch.flush();
 
-  // Flush remaining
-  if (foodBatch.length > 0) {
-    await insertFoodBatch(sql, foodBatch);
-    if (servingBatch.length > 0) await insertServingBatch(sql, servingBatch);
-    imported += foodBatch.length;
-  }
-
-  console.log(`[OFF] Staging complete: ${imported.toLocaleString()} foods (${elapsed(start)})`);
+  console.log(`[OFF] Staging complete: ${batch.count.toLocaleString()} foods (${elapsed(start)})`);
   console.log(`[OFF] Upserting into main tables...`);
 
-  const result = await upsertFromStaging(sql);
-  console.log(`[OFF] Done: ${imported.toLocaleString()} foods upserted in ${elapsed(start)}`);
+  await upsertFromStaging(sql);
 
-  return imported;
+  // Save meta only after successful upsert
+  meta.off = { etag: dl.etag, lastSync: new Date().toISOString() };
+  saveMeta(meta);
+
+  console.log(`[OFF] Done: ${batch.count.toLocaleString()} foods upserted in ${elapsed(start)}`);
+  return batch.count;
 }
 
 // ── USDA Import ──────────────────────────────────────────────────────────
@@ -454,136 +495,117 @@ async function importUsda(sql: postgres.Sql, limit: number): Promise<number> {
     return 0;
   }
 
-  meta.usda = { etag: dl.etag, lastSync: new Date().toISOString() };
-  saveMeta(meta);
-
-  // Extract CSV files from zip using unzip command
-  const { execSync } = await import("child_process");
   const extractDir = join(DATA_DIR, "usda-extract");
   mkdirSync(extractDir, { recursive: true });
-  execSync(`unzip -o -j "${destPath}" "*/food.csv" "*/food_nutrient.csv" "*/food_portion.csv" -d "${extractDir}"`, {
-    stdio: "pipe",
-  });
 
-  console.log("[USDA] Building nutrient map...");
+  try {
+    // Use execFileSync (no shell interpolation — safe from injection)
+    execFileSync("unzip", [
+      "-o", "-j", destPath,
+      "*/food.csv", "*/food_nutrient.csv", "*/food_portion.csv",
+      "-d", extractDir,
+    ], { stdio: "pipe" });
 
-  // Step 1: Build nutrient map (fdc_id → { nutrient_id → amount })
-  const nutrientMap = new Map<string, Record<number, number>>();
-  const nutrientIds = new Set([
-    NUTRIENT_ENERGY, NUTRIENT_PROTEIN, NUTRIENT_CARBS, NUTRIENT_FAT,
-    NUTRIENT_FIBER, NUTRIENT_SUGAR, NUTRIENT_SODIUM, NUTRIENT_SAT_FAT,
-  ]);
+    console.log("[USDA] Building nutrient map...");
 
-  const nutrientStream = createReadStream(join(extractDir, "food_nutrient.csv"))
-    .pipe(parse({ columns: true, skip_empty_lines: true }));
+    // Step 1: Build nutrient map
+    const nutrientMap = new Map<string, Record<number, number>>();
+    const nutrientIds = new Set([
+      NUTRIENT_ENERGY, NUTRIENT_PROTEIN, NUTRIENT_CARBS, NUTRIENT_FAT,
+      NUTRIENT_FIBER, NUTRIENT_SUGAR, NUTRIENT_SODIUM, NUTRIENT_SAT_FAT,
+    ]);
 
-  let nutrientRows = 0;
-  for await (const row of nutrientStream) {
-    const r = row as Record<string, string>;
-    const nutrientId = parseInt(r["nutrient_id"] ?? "");
-    if (!nutrientIds.has(nutrientId)) continue;
-
-    const fdcId = r["fdc_id"] ?? "";
-    if (!fdcId) continue;
-
-    let map = nutrientMap.get(fdcId);
-    if (!map) {
-      map = {};
-      nutrientMap.set(fdcId, map);
-    }
-    map[nutrientId] = num(r["amount"]);
-    nutrientRows++;
-  }
-  console.log(`[USDA] Loaded ${nutrientRows.toLocaleString()} nutrient rows for ${nutrientMap.size.toLocaleString()} foods`);
-
-  // Step 2: Build serving sizes from food_portion.csv
-  const portionMap = new Map<string, ServingRow[]>();
-  const portionFile = join(extractDir, "food_portion.csv");
-  if (existsSync(portionFile)) {
-    const portionStream = createReadStream(portionFile)
+    const nutrientStream = createReadStream(join(extractDir, "food_nutrient.csv"))
       .pipe(parse({ columns: true, skip_empty_lines: true }));
 
-    for await (const row of portionStream) {
+    let nutrientRows = 0;
+    for await (const row of nutrientStream) {
+      const r = row as Record<string, string>;
+      const nutrientId = parseInt(r["nutrient_id"] ?? "");
+      if (!nutrientIds.has(nutrientId)) continue;
+
+      const fdcId = r["fdc_id"] ?? "";
+      if (!fdcId) continue;
+
+      let map = nutrientMap.get(fdcId);
+      if (!map) { map = {}; nutrientMap.set(fdcId, map); }
+      map[nutrientId] = num(r["amount"]);
+      nutrientRows++;
+    }
+    console.log(`[USDA] Loaded ${nutrientRows.toLocaleString()} nutrient rows for ${nutrientMap.size.toLocaleString()} foods`);
+
+    // Step 2: Build serving sizes from food_portion.csv
+    const portionMap = new Map<string, ServingRow[]>();
+    const portionFile = join(extractDir, "food_portion.csv");
+    if (existsSync(portionFile)) {
+      const portionStream = createReadStream(portionFile)
+        .pipe(parse({ columns: true, skip_empty_lines: true }));
+
+      for await (const row of portionStream) {
+        const r = row as Record<string, string>;
+        const fdcId = r["fdc_id"] ?? "";
+        const desc = r["portion_description"] ?? r["modifier"] ?? "";
+        const grams = num(r["gram_weight"]);
+        const portionId = r["id"] ?? "";
+
+        if (!fdcId || !desc || grams <= 0) continue;
+
+        const portions = portionMap.get(fdcId) ?? [];
+        portions.push({
+          id: `usda-${fdcId}-ss${portionId}`,
+          foodId: `usda-${fdcId}`,
+          label: desc,
+          weightG: grams,
+        });
+        portionMap.set(fdcId, portions);
+      }
+      console.log(`[USDA] Loaded portions for ${portionMap.size.toLocaleString()} foods`);
+    }
+
+    // Step 3: Stream food.csv and build food records
+    await resetStagingTables(sql);
+
+    const foodStream = createReadStream(join(extractDir, "food.csv"))
+      .pipe(parse({ columns: true, skip_empty_lines: true }));
+
+    let processed = 0;
+    const batch = new BatchAccumulator(sql, "USDA", start);
+
+    for await (const row of foodStream) {
+      if (limit > 0 && processed >= limit) break;
+      processed++;
+
       const r = row as Record<string, string>;
       const fdcId = r["fdc_id"] ?? "";
-      const desc = r["portion_description"] ?? r["modifier"] ?? "";
-      const grams = num(r["gram_weight"]);
-      const portionId = r["id"] ?? "";
+      const description = r["description"]?.trim() ?? "";
+      if (!fdcId || !description) continue;
 
-      if (!fdcId || !desc || grams <= 0) continue;
-
-      const portions = portionMap.get(fdcId) ?? [];
-      portions.push({
-        id: `usda-${fdcId}-ss${portionId}`,
-        foodId: `usda-${fdcId}`,
-        label: desc,
-        weightG: grams,
-      });
-      portionMap.set(fdcId, portions);
+      const nutrients = nutrientMap.get(fdcId) ?? {};
+      const food = parseUsdaFood({ fdc_id: fdcId, description }, nutrients);
+      const portions = portionMap.get(fdcId);
+      await batch.add(food, portions ?? []);
     }
-    console.log(`[USDA] Loaded portions for ${portionMap.size.toLocaleString()} foods`);
+    await batch.flush();
+
+    // Free memory before upsert
+    nutrientMap.clear();
+    portionMap.clear();
+
+    console.log(`[USDA] Staging complete: ${batch.count.toLocaleString()} foods (${elapsed(start)})`);
+    console.log(`[USDA] Upserting into main tables...`);
+
+    await upsertFromStaging(sql);
+
+    // Save meta only after successful upsert
+    meta.usda = { etag: dl.etag, lastSync: new Date().toISOString() };
+    saveMeta(meta);
+
+    console.log(`[USDA] Done: ${batch.count.toLocaleString()} foods upserted in ${elapsed(start)}`);
+    return batch.count;
+  } finally {
+    // Cleanup extracted files
+    rmSync(extractDir, { recursive: true, force: true });
   }
-
-  // Step 3: Stream food.csv and build food records
-  await createStagingTables(sql);
-  await sql`TRUNCATE foods_staging`;
-  await sql`TRUNCATE serving_sizes_staging`;
-
-  const foodStream = createReadStream(join(extractDir, "food.csv"))
-    .pipe(parse({ columns: true, skip_empty_lines: true }));
-
-  let processed = 0;
-  let imported = 0;
-  let foodBatch: FoodRow[] = [];
-  let servingBatch: ServingRow[] = [];
-
-  for await (const row of foodStream) {
-    if (limit > 0 && processed >= limit) break;
-    processed++;
-
-    const r = row as Record<string, string>;
-    const fdcId = r["fdc_id"] ?? "";
-    const description = r["description"]?.trim() ?? "";
-    if (!fdcId || !description) continue;
-
-    const nutrients = nutrientMap.get(fdcId) ?? {};
-    const food = parseUsdaFood(
-      { fdc_id: fdcId, description },
-      nutrients
-    );
-    foodBatch.push(food);
-
-    // Add serving sizes
-    const portions = portionMap.get(fdcId);
-    if (portions) servingBatch.push(...portions);
-
-    if (foodBatch.length >= BATCH_SIZE) {
-      await insertFoodBatch(sql, foodBatch);
-      if (servingBatch.length > 0) await insertServingBatch(sql, servingBatch);
-      imported += foodBatch.length;
-      foodBatch = [];
-      servingBatch = [];
-
-      if (imported % 100_000 === 0) {
-        console.log(`[USDA] ${imported.toLocaleString()} rows staged (${elapsed(start)})`);
-      }
-    }
-  }
-
-  // Flush remaining
-  if (foodBatch.length > 0) {
-    await insertFoodBatch(sql, foodBatch);
-    if (servingBatch.length > 0) await insertServingBatch(sql, servingBatch);
-    imported += foodBatch.length;
-  }
-
-  console.log(`[USDA] Staging complete: ${imported.toLocaleString()} foods (${elapsed(start)})`);
-  console.log(`[USDA] Upserting into main tables...`);
-
-  await upsertFromStaging(sql);
-  console.log(`[USDA] Done: ${imported.toLocaleString()} foods upserted in ${elapsed(start)}`);
-
-  return imported;
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────
@@ -592,6 +614,10 @@ async function main() {
   const args = process.argv.slice(2);
   const sourceArg = args.find(a => a.startsWith("--source="))?.split("=")[1] ?? "all";
   const limitArg = parseInt(args.find(a => a.startsWith("--limit="))?.split("=")[1] ?? "0");
+
+  if (!["all", "off", "usda"].includes(sourceArg)) {
+    throw new Error(`Invalid --source value: "${sourceArg}". Must be all, off, or usda.`);
+  }
 
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL required");
@@ -603,6 +629,10 @@ async function main() {
   let totalFoods = 0;
 
   try {
+    // Drop GIN indexes before bulk load (3-5x faster upsert)
+    console.log("Dropping GIN indexes for bulk load...");
+    await dropSearchIndexes(sql);
+
     if (sourceArg === "all" || sourceArg === "off") {
       totalFoods += await importOff(sql, limitArg);
     }
@@ -611,7 +641,12 @@ async function main() {
       totalFoods += await importUsda(sql, limitArg);
     }
 
-    // Get total count
+    // Rebuild indexes + update statistics
+    await rebuildSearchIndexes(sql);
+    console.log("Running ANALYZE...");
+    await sql`ANALYZE foods`;
+    await sql`ANALYZE serving_sizes`;
+
     const [countRow] = await sql`SELECT count(*) as count FROM foods`;
     const total = Number(countRow?.count ?? 0);
 
@@ -625,7 +660,8 @@ async function main() {
 // Only run when invoked directly, not when imported for tests
 if (process.env.NODE_ENV !== "test") {
   main().catch((err) => {
-    console.error("Data sync failed:", err);
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    console.error("Data sync failed:", msg.replace(/postgresql:\/\/[^\s]+/g, "postgresql://***"));
     process.exit(1);
   });
 }
