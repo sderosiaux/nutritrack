@@ -419,7 +419,7 @@
   lane: 10
   status: "DONE"
   test: "src/__tests__/chk037-lessons-api.test.ts"
-  commit: "PLACEHOLDER"
+  commit: "b5af24b"
 
 - id: "CHK-038"
   description: "Lesson seed data: 20+ open-licensed articles across all 6 categories: nutrition, sleep, stress, habits, fitness, mindfulness"
@@ -428,7 +428,7 @@
   lane: 10
   status: "DONE"
   test: "src/__tests__/chk038-coach-home.test.tsx"
-  commit: "PLACEHOLDER"
+  commit: "b5af24b"
 
 - id: "CHK-039"
   description: "Coach home UI (S-COACH-1): today queue (2-3 cards), continue learning section, category browse (6 categories). Lesson detail (S-COACH-2): title, read time, cover illustration, markdown body render, mark complete button, related lessons. Empty state when all done: 'You've completed today's lessons. Come back tomorrow.' + Browse all CTA."
@@ -437,7 +437,7 @@
   lane: 10
   status: "DONE"
   test: "src/__tests__/chk039-lesson-detail.test.tsx"
-  commit: "PLACEHOLDER"
+  commit: "b5af24b"
 
 - id: "CHK-040"
   description: "Recipe + RecipeIngredient Drizzle schema + migration; recipe API: GET /api/v1/recipes (browse + filter), /:id, POST (create), PUT /:id, DELETE /:id, POST /:id/favorite, DELETE /:id/favorite, POST /:id/log (creates MealEntries for all ingredients in selected meal slot)"
