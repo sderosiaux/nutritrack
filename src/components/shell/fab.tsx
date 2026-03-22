@@ -2,7 +2,8 @@
 
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useLogEntry } from "@/lib/hooks/use-log-entry";
+import { useUIStore } from "@/lib/stores/ui-store";
+import { useGuestStore } from "@/lib/stores/guest-store";
 
 interface FABProps {
   onClick?: () => void;
@@ -10,13 +11,20 @@ interface FABProps {
 }
 
 export function FAB({ onClick, className }: FABProps) {
-  // useLogEntry wires the IndexedDB-first data path for guest mode.
-  // The full log modal (lane 5) will call logMealEntry/logWaterEntry/logWeightEntry.
-  const { isGuest } = useLogEntry();
+  const isGuest = useGuestStore((s) => s.isGuest);
+  const openLogModal = useUIStore((s) => s.openLogModal);
+
+  function handleClick() {
+    if (onClick) {
+      onClick();
+    } else {
+      openLogModal();
+    }
+  }
 
   return (
     <button
-      onClick={onClick}
+      onClick={handleClick}
       aria-label={isGuest ? "Log food (guest mode)" : "Log food"}
       className={cn(
         "fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full",

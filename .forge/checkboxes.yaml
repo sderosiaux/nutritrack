@@ -164,8 +164,8 @@
   source: "spec/04-screens.md:§S-DASH-1"
   milestone: "M1"
   lane: 5
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk015-dashboard.test.tsx"
   commit: null
 
 - id: "CHK-016"
@@ -173,8 +173,8 @@
   source: "spec/04-screens.md:§S-LOG-6"
   milestone: "M1"
   lane: 5
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk016-food-search.test.tsx"
   commit: null
 
 - id: "CHK-017"
@@ -182,8 +182,8 @@
   source: "spec/04-screens.md:§S-LOG-1"
   milestone: "M1"
   lane: 5
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk017-log-entry-modal.test.tsx"
   commit: null
 
 - id: "CHK-018"
@@ -191,8 +191,8 @@
   source: "spec/04-screens.md:§S-JOURNAL-1"
   milestone: "M1"
   lane: 5
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk018-journal.test.tsx"
   commit: null
 
 - id: "CHK-032"
@@ -200,8 +200,8 @@
   source: "spec/04-screens.md:§S-LOG-4"
   milestone: "M1"
   lane: 5
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk032-barcode-scanner.test.tsx"
   commit: null
 
 - id: "CHK-052"
@@ -209,8 +209,8 @@
   source: "spec/04-screens.md:§S-LOG-9"
   milestone: "M1"
   lane: 5
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk052-custom-food-form.test.tsx"
   commit: null
 
 # ── M2: Profile & Personalization ──────────────────────────────
@@ -446,7 +446,7 @@
   lane: 11
   status: "DONE"
   test: "src/__tests__/chk040-recipes-api.test.ts"
-  commit: "pending"
+  commit: "c65a82a"
 
 - id: "CHK-041"
   description: "Recipe seed data: 30+ recipes with ingredients linked to food DB; macros per serving auto-calculated from RecipeIngredient weights"
@@ -455,7 +455,7 @@
   lane: 11
   status: "DONE"
   test: "src/__tests__/chk041-recipe-seed.test.ts"
-  commit: "pending"
+  commit: "c65a82a"
 
 - id: "CHK-042"
   description: "Recipe browser UI (S-COACH-3): grid/list toggle, filter bar (diet type, prep time, calorie range), recipe cards. Recipe detail (S-COACH-4): hero image, macros per serving, serving selector (scales ingredients), ingredients list, step-by-step instructions, 'Log this meal' button → meal slot picker, favorite toggle, custom recipe builder (add food DB items as ingredients, auto-calculate macros). Empty state (no favorites): 'Save recipes you love here' + Browse recipes CTA."
@@ -464,7 +464,7 @@
   lane: 11
   status: "DONE"
   test: "src/__tests__/chk042-recipe-ui.test.tsx"
-  commit: "pending"
+  commit: "c65a82a"
 
 # ── M6: PWA & Polish ──────────────────────────────────────────
 
