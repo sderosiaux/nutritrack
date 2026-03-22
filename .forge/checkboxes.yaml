@@ -220,8 +220,8 @@
   source: "spec/04-screens.md:§S-AUTH-2"
   milestone: "M2"
   lane: 6
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk019-onboarding.test.tsx"
   commit: null
 
 - id: "CHK-020"
@@ -229,8 +229,8 @@
   source: "spec/02-data-models.md:§Calorie Calculation (TDEE)"
   milestone: "M2"
   lane: 6
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk020-tdee.test.ts"
   commit: null
 
 - id: "CHK-021"
@@ -238,8 +238,8 @@
   source: "spec/07-api.md:§User Profile"
   milestone: "M2"
   lane: 6
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk021-profile-api.test.ts"
   commit: null
 
 - id: "CHK-022"
@@ -247,8 +247,8 @@
   source: "spec/04-screens.md:§S-PROFILE-1"
   milestone: "M2"
   lane: 6
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk022-profile-editor.test.tsx"
   commit: null
 
 - id: "CHK-023"
@@ -256,8 +256,8 @@
   source: "spec/08-milestones.md:§Milestone 2"
   milestone: "M2"
   lane: 6
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk023-dashboard-targets.test.tsx"
   commit: null
 
 - id: "CHK-055"
@@ -265,8 +265,8 @@
   source: "spec/04-screens.md:§S-PROFILE-3"
   milestone: "M2"
   lane: 6
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk055-account-deletion.test.ts"
   commit: null
 
 - id: "CHK-058"
@@ -274,8 +274,8 @@
   source: "spec/03-user-flows.md:§Flow 6"
   milestone: "M2"
   lane: 6
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk058-weekly-checkin.test.tsx"
   commit: null
 
 # ── M2+: Weight & Activity ─────────────────────────────────────

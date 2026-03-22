@@ -8,6 +8,7 @@ import { useUIStore } from "@/lib/stores/ui-store";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
+import { useState } from "react";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -40,6 +41,15 @@ interface DailyLog {
   totalFiber: number;
   waterMl: number;
   meals: MealSlot[];
+}
+
+interface ProfileTargets {
+  caloriesKcal: number;
+  proteinG: string | number;
+  carbsG: string | number;
+  fatG: string | number;
+  fiberG: string | number;
+  waterMl: number;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -78,6 +88,15 @@ const MEAL_ORDER = [
   "evening_snack",
   "other",
 ];
+
+const DEFAULT_TARGETS = {
+  calories: 2000,
+  protein: 150,
+  carbs: 250,
+  fat: 65,
+  fiber: 25,
+  water: 2000,
+};
 
 // ── Meal Card ──────────────────────────────────────────────────────────────
 
@@ -193,17 +212,6 @@ function MealCard({
 
 // ── Main Dashboard ─────────────────────────────────────────────────────────
 
-import { useState } from "react";
-
-const DEFAULT_TARGETS = {
-  calories: 2000,
-  protein: 150,
-  carbs: 250,
-  fat: 65,
-  fiber: 25,
-  water: 2000,
-};
-
 export default function TodayPage() {
   const { selectedDate, setSelectedDate, logModalOpen, openLogModal, closeLogModal, logModalMealType } = useUIStore();
   const queryClient = useQueryClient();
@@ -217,6 +225,27 @@ export default function TodayPage() {
     },
     staleTime: 30_000,
   });
+
+  // CHK-023: Fetch user profile targets to wire to calorie ring and macro bars
+  const { data: profileData } = useQuery<{ profile: unknown; targets: ProfileTargets | null }>({
+    queryKey: ["profile"],
+    queryFn: async () => {
+      const res = await fetch("/api/v1/profile");
+      if (!res.ok) return { profile: null, targets: null };
+      return res.json();
+    },
+    staleTime: 60_000,
+  });
+
+  const userTargets = profileData?.targets;
+  const activeTargets = {
+    calories: userTargets ? userTargets.caloriesKcal : DEFAULT_TARGETS.calories,
+    protein: userTargets ? Math.round(Number(userTargets.proteinG)) : DEFAULT_TARGETS.protein,
+    carbs: userTargets ? Math.round(Number(userTargets.carbsG)) : DEFAULT_TARGETS.carbs,
+    fat: userTargets ? Math.round(Number(userTargets.fatG)) : DEFAULT_TARGETS.fat,
+    fiber: userTargets ? Math.round(Number(userTargets.fiberG)) : DEFAULT_TARGETS.fiber,
+    water: userTargets ? userTargets.waterMl : DEFAULT_TARGETS.water,
+  };
 
   const addWaterMutation = useMutation({
     mutationFn: async (ml: number) => {
@@ -327,7 +356,7 @@ export default function TodayPage() {
                 <div className="flex-shrink-0">
                   <CalorieRing
                     consumed={consumed}
-                    target={DEFAULT_TARGETS.calories}
+                    target={activeTargets.calories}
                     size={180}
                   />
                 </div>
@@ -338,10 +367,10 @@ export default function TodayPage() {
                     fat={log?.totalFat ?? 0}
                     fiber={log?.totalFiber ?? 0}
                     targets={{
-                      protein: DEFAULT_TARGETS.protein,
-                      carbs: DEFAULT_TARGETS.carbs,
-                      fat: DEFAULT_TARGETS.fat,
-                      fiber: DEFAULT_TARGETS.fiber,
+                      protein: activeTargets.protein,
+                      carbs: activeTargets.carbs,
+                      fat: activeTargets.fat,
+                      fiber: activeTargets.fiber,
                     }}
                   />
                 </div>
@@ -373,7 +402,7 @@ export default function TodayPage() {
                       Water
                     </p>
                     <p style={{ fontSize: 12, color: "var(--color-text-muted)" }}>
-                      {waterMl} / {DEFAULT_TARGETS.water} ml
+                      {waterMl} / {activeTargets.water} ml
                     </p>
                   </div>
                 </div>
@@ -382,7 +411,7 @@ export default function TodayPage() {
                   <div
                     style={{
                       height: "100%",
-                      width: `${Math.min((waterMl / DEFAULT_TARGETS.water) * 100, 100)}%`,
+                      width: `${Math.min((waterMl / activeTargets.water) * 100, 100)}%`,
                       background: "var(--color-info)",
                       borderRadius: "var(--radius-full)",
                       transition: "width 600ms ease-out",
