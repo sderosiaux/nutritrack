@@ -8,6 +8,20 @@
       "when": 1772500562801,
       "tag": "0000_melted_betty_ross",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1772500562802,
+      "tag": "0001_daily_targets_unique",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1772500562803,
+      "tag": "0002_search_vector",
+      "breakpoints": true
     }
   ]
 }

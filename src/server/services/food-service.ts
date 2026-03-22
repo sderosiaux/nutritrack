@@ -5,7 +5,7 @@
  * Ranking: recently logged > exact match > verified > branded.
  */
 import { db, foods, servingSizes, foodFavorites, mealEntries } from "@/server/db";
-import { eq, and, ilike, or, desc, sql, isNotNull, inArray } from "drizzle-orm";
+import { eq, and, or, desc, sql, isNotNull, inArray } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -126,27 +126,30 @@ export async function searchFoods(params: {
   userId?: string;
 }): Promise<{ items: FoodSearchItem[]; total: number }> {
   const { q, limit, offset, userId } = params;
-  const pattern = `%${q}%`;
+  const trimmed = q.trim();
 
-  // Build search condition:
-  // Full-text search for multi-word queries + ILIKE fallback + nameTranslations JSONB text match
-  const ftsCondition = sql`to_tsvector('english', ${foods.name}) @@ plainto_tsquery('english', ${q})`;
-  const ilikeCondition = or(
-    ilike(foods.name, pattern),
-    ilike(foods.brandName, pattern),
-    // Multi-language: search nameTranslations JSONB values as text
-    sql`(${foods.nameTranslations})::text ILIKE ${pattern}`
-  );
+  // Use stored search_vector (GIN index) for full-text search.
+  // For short/single-word queries, add trigram similarity (pg_trgm) for typo tolerance.
+  const isMultiWord = trimmed.split(/\s+/).length >= 2;
 
-  // Use FTS for multi-word queries; ILIKE handles typo-tolerance for short terms
-  const searchCond = q.trim().split(/\s+/).length >= 2
-    ? or(ftsCondition, ilikeCondition)
-    : ilikeCondition;
+  const ftsCondition = sql`${foods}.search_vector @@ websearch_to_tsquery('english', ${trimmed})`;
+  const trgmCondition = sql`similarity(${foods.name}, ${trimmed}) > 0.15`;
+
+  const searchCond = isMultiWord ? ftsCondition : or(ftsCondition, trgmCondition);
+
+  // Order by relevance: ts_rank for FTS, similarity for trigram
+  const rankExpr = isMultiWord
+    ? sql`ts_rank(${foods}.search_vector, websearch_to_tsquery('english', ${trimmed}))`
+    : sql`GREATEST(
+        ts_rank(${foods}.search_vector, websearch_to_tsquery('english', ${trimmed})),
+        similarity(${foods.name}, ${trimmed})
+      )`;
 
   const rows = await db
     .select()
     .from(foods)
     .where(searchCond)
+    .orderBy(sql`${rankExpr} DESC`)
     .limit(limit)
     .offset(offset);
 

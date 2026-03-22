@@ -12,7 +12,7 @@ Built as an alternative to [Foodvisor](https://www.foodvisor.io/). Docker Compos
 
 - Snap a photo of your meal, AI identifies the food and estimates weights (Ollama, OpenAI, or Gemini)
 - Scan barcodes via Open Food Facts
-- Search 10k+ foods (USDA + Open Food Facts), log manually, or use voice input
+- Search 3.5M+ foods (full USDA + Open Food Facts databases), log manually, or use voice input
 - Track calories, macros, hydration, weight, and exercise per day
 - Get personalized targets based on your profile (TDEE / Mifflin-St Jeor)
 - Browse recipes and educational content
@@ -77,10 +77,26 @@ cp .env.example .env
 
 docker compose up -d
 docker compose exec app pnpm db:migrate
-docker compose exec app pnpm db:seed   # optional: ~10k foods + demo user
+docker compose exec app pnpm db:seed   # demo user + lessons + recipes
+
+# Load full food database (~3.5M foods, takes ~20min)
+docker compose exec app pnpm data:sync
+# Or just demo data: the seed includes ~10k foods for quick testing
 ```
 
 App runs at http://localhost:3000. MinIO console at http://localhost:9001.
+
+### Weekly data updates
+
+The food database can be refreshed weekly to pick up new products. The script uses ETag headers to skip re-downloading unchanged data.
+
+```bash
+# Manual run
+docker compose exec app pnpm data:sync
+
+# Cron (every Sunday 3am)
+0 3 * * 0 /path/to/nutritrack/src/scripts/data-sync-cron.sh
+```
 
 For production deployment with nginx and SSL, see [docs/self-hosting.md](docs/self-hosting.md).
 

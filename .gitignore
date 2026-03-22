@@ -41,5 +41,8 @@ test-results/
 # Drizzle — migration SQL files are tracked in git (they are deployment artifacts)
 # drizzle/migrations/*.sql
 
+# Data sync (bulk downloads)
+data/
+
 # Misc
 *.tsbuildinfo

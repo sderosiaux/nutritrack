@@ -223,7 +223,7 @@ describe("CHK-009: searchFoods service — real function, DB-only mock", () => {
   // FTS and nameTranslations JSONB conditions are present in the generated query.
   // Without these tests, removing FTS/JSONB from the service wouldn't cause any failure.
 
-  it("multi-word query passes FTS condition (to_tsvector/plainto_tsquery) to .where()", async () => {
+  it("multi-word query uses stored search_vector with websearch_to_tsquery in .where()", async () => {
     const chain1 = makeChain([BASE_FOOD]);
     vi.mocked(db.select)
       .mockReturnValueOnce(chain1 as never)
@@ -232,43 +232,39 @@ describe("CHK-009: searchFoods service — real function, DB-only mock", () => {
 
     await searchFoods({ q: "chicken breast", limit: 20, offset: 0 }); // 2 words → FTS path
 
-    // chain1.where is a vi.fn() — first call receives the searchCond SQL expression
     const whereArg = (chain1 as any).where.mock.calls[0]?.[0];
     expect(whereArg, "no argument passed to .where()").toBeDefined();
 
-    // Drizzle SQL objects serialize their queryChunks (StringChunk.value arrays + Param.value)
     const serialized = JSON.stringify(whereArg);
-    expect(serialized, "FTS missing: to_tsvector not in .where() SQL expression").toContain("to_tsvector");
-    expect(serialized, "FTS missing: plainto_tsquery not in .where() SQL expression").toContain("plainto_tsquery");
+    expect(serialized, "FTS missing: search_vector not in .where() SQL expression").toContain("search_vector");
+    expect(serialized, "FTS missing: websearch_to_tsquery not in .where() SQL expression").toContain("websearch_to_tsquery");
   });
 
-  it("single-word query does NOT include FTS in .where() (ILIKE-only path)", async () => {
+  it("single-word query includes trigram similarity in .where()", async () => {
     const chain1 = makeChain([BASE_FOOD]);
     vi.mocked(db.select)
       .mockReturnValueOnce(chain1 as never)
       .mockReturnValueOnce(makeChain([{ count: 1 }]) as never)
       .mockReturnValueOnce(makeChain([SERVING_SIZE]) as never);
 
-    await searchFoods({ q: "chicken", limit: 20, offset: 0 }); // 1 word → ILIKE only
+    await searchFoods({ q: "chicken", limit: 20, offset: 0 }); // 1 word → FTS + trigram
 
     const whereArg = (chain1 as any).where.mock.calls[0]?.[0];
     const serialized = JSON.stringify(whereArg);
-    expect(serialized, "Single-word query should not use FTS").not.toContain("to_tsvector");
+    expect(serialized, "Trigram similarity should be in single-word query").toContain("similarity");
   });
 
-  it("nameTranslations JSONB cast condition is always present in .where() SQL", async () => {
+  it("single-word query also includes search_vector FTS in .where()", async () => {
     const chain1 = makeChain([BASE_FOOD]);
     vi.mocked(db.select)
       .mockReturnValueOnce(chain1 as never)
       .mockReturnValueOnce(makeChain([{ count: 1 }]) as never)
       .mockReturnValueOnce(makeChain([SERVING_SIZE]) as never);
 
-    // French query — single word, so only ILIKE path, but nameTranslations must always be there
     await searchFoods({ q: "poulet", limit: 20, offset: 0 });
 
     const whereArg = (chain1 as any).where.mock.calls[0]?.[0];
     const serialized = JSON.stringify(whereArg);
-    // The JSONB cast expression `::text ILIKE` must appear in the SQL string chunks
-    expect(serialized, "nameTranslations JSONB search condition missing from .where() SQL").toContain("::text ILIKE");
+    expect(serialized, "search_vector FTS should be in single-word query too").toContain("search_vector");
   });
 });
