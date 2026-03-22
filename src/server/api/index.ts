@@ -11,6 +11,7 @@ import { notificationsRouter } from "./routes/notifications";
 import { profile } from "./routes/profile";
 import { users } from "./routes/users";
 import { recognize } from "./routes/recognize";
+import { analytics } from "./routes/analytics";
 import { sessionMiddleware } from "./middleware/auth";
 
 const app = new Hono().basePath("/api/v1");
@@ -54,6 +55,9 @@ app.route("/users", users);
 
 // AI recognition (photo upload, vision providers)
 app.route("/recognize", recognize);
+
+// Analytics
+app.route("/analytics", analytics);
 
 // 404 fallback
 app.notFound((c) => {

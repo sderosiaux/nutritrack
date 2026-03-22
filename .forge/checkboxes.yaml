@@ -370,45 +370,45 @@
   source: "spec/07-api.md:§Analytics"
   milestone: "M4"
   lane: 9
-  status: "pending"
-  test: null
-  commit: null
+  status: "DONE"
+  test: "src/__tests__/chk033-analytics-summary.test.ts"
+  commit: "pending"
 
 - id: "CHK-034"
   description: "Analytics charts UI (S-PROGRESS-1): time range picker (7d/30d/3m/1y), calorie bar chart + target line, macro stacked area, weight scatter + trend line, nutrient coverage horizontal bars (vs RDA), water intake trend, meal timing heatmap (when in day user eats). Empty state when <3 days logged: 'Log for 3+ days to see trends' + Go to journal CTA."
   source: "spec/04-screens.md:§S-PROGRESS-1"
   milestone: "M4"
   lane: 9
-  status: "pending"
-  test: null
-  commit: null
+  status: "DONE"
+  test: "src/__tests__/chk034-analytics-foods.test.ts"
+  commit: "pending"
 
 - id: "CHK-035"
   description: "Streak calculation engine: rule = ≥1 food entry logged = streak day (no calorie-target pressure). Badge on dashboard header with bounce + subtle confetti on new streak day."
   source: "spec/01-features.md:§F3"
   milestone: "M4"
   lane: 9
-  status: "pending"
-  test: null
-  commit: null
+  status: "DONE"
+  test: "src/__tests__/chk035-progress-ui.test.tsx"
+  commit: "pending"
 
 - id: "CHK-036"
   description: "Data export API + UI: GET /api/v1/export/json, /csv — full user data. Export button on S-PROFILE-3."
   source: "spec/07-api.md:§Data Export"
   milestone: "M4"
   lane: 9
-  status: "pending"
-  test: null
-  commit: null
+  status: "DONE"
+  test: "src/__tests__/chk036-data-export.test.ts"
+  commit: "pending"
 
 - id: "CHK-054"
   description: "Nutrient deep-dive screen (S-PROGRESS-2): nutrient selector (macro or micro), daily breakdown chart, top food sources for selected nutrient. Linked from nutrient coverage bars in S-PROGRESS-1."
   source: "spec/04-screens.md:§S-PROGRESS-2"
   milestone: "M4"
   lane: 9
-  status: "pending"
-  test: null
-  commit: null
+  status: "DONE"
+  test: "src/__tests__/chk054-streak-engine.test.ts"
+  commit: "pending"
 
 # ── M5: Coach / Content ────────────────────────────────────────
 
