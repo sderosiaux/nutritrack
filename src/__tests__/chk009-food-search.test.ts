@@ -116,15 +116,17 @@ describe("CHK-009: Food search API (route layer)", () => {
     expect(res.status).toBe(400);
   });
 
-  it("returns 401 when not authenticated", async () => {
+  it("returns 200 when not authenticated (search is public for guest mode)", async () => {
     const { getSessionFromRequest } = await import("@/server/auth");
     vi.mocked(getSessionFromRequest).mockResolvedValueOnce(null);
+    const { searchFoods } = await import("@/server/services/food-service");
+    vi.mocked(searchFoods).mockResolvedValueOnce({ items: [], total: 0 });
 
     const { app } = await import("@/server/api");
     const res = await app.fetch(
       new Request("http://localhost/api/v1/foods/search?q=chicken")
     );
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(200);
   });
 
   it("source field is 'local' for DB results", async () => {

@@ -4,15 +4,14 @@
  */
 import { Hono } from "hono";
 import { z } from "zod";
-import { requireAuth, sessionMiddleware } from "../middleware/auth";
+import { requireAuth } from "../middleware/auth";
 import * as foodService from "@/server/services/food-service";
 
 type Env = { Variables: { session: { user: { id: string; email: string; name?: string } } | null } };
 
 const router = new Hono<Env>();
 
-// Attach session for all routes (without requiring it)
-router.use("*", sessionMiddleware);
+// Session already attached by top-level app middleware — no need to re-apply here.
 
 // ── Static routes (must precede /:id) ──────────────────────────────────────
 

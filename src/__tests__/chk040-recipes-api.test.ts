@@ -142,7 +142,8 @@ describe("CHK-040: GET /api/v1/recipes", () => {
   it("returns 200 with recipe list (public)", async () => {
     vi.mocked(db.select)
       .mockReturnValueOnce(makeChain([RECIPE_1]) as never)
-      .mockReturnValueOnce(makeChain([]) as never); // ingredients
+      .mockReturnValueOnce(makeChain([]) as never)             // ingredients
+      .mockReturnValueOnce(makeChain([{ count: 1 }]) as never); // total count
     const res = await app.request("/api/v1/recipes");
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -153,7 +154,8 @@ describe("CHK-040: GET /api/v1/recipes", () => {
   it("supports pagination", async () => {
     vi.mocked(db.select)
       .mockReturnValueOnce(makeChain([RECIPE_1]) as never)
-      .mockReturnValueOnce(makeChain([]) as never);
+      .mockReturnValueOnce(makeChain([]) as never)             // ingredients
+      .mockReturnValueOnce(makeChain([{ count: 35 }]) as never); // total count
     const res = await app.request("/api/v1/recipes?limit=10&offset=0");
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -163,7 +165,8 @@ describe("CHK-040: GET /api/v1/recipes", () => {
   it("filters by category", async () => {
     vi.mocked(db.select)
       .mockReturnValueOnce(makeChain([RECIPE_1]) as never)
-      .mockReturnValueOnce(makeChain([]) as never);
+      .mockReturnValueOnce(makeChain([]) as never)             // ingredients
+      .mockReturnValueOnce(makeChain([{ count: 1 }]) as never); // total count
     const res = await app.request("/api/v1/recipes?category=breakfast");
     expect(res.status).toBe(200);
   });
@@ -362,7 +365,8 @@ describe("CHK-040: Recipe service pure functions", () => {
   it("getRecipes returns array from db", async () => {
     vi.mocked(db.select)
       .mockReturnValueOnce(makeChain([RECIPE_1]) as never)
-      .mockReturnValueOnce(makeChain([]) as never);
+      .mockReturnValueOnce(makeChain([]) as never)             // ingredients
+      .mockReturnValueOnce(makeChain([{ count: 1 }]) as never); // total count
     const { getRecipes } = await import("@/server/services/recipe-service");
     const result = await getRecipes({});
     expect(Array.isArray(result.recipes)).toBe(true);

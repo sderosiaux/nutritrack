@@ -84,7 +84,9 @@ describe("CHK-037: GET /api/v1/lessons", () => {
   });
 
   it("returns 200 with lesson list (public, no auth required)", async () => {
-    vi.mocked(db.select).mockReturnValueOnce(makeChain([LESSON_1, LESSON_2]) as never);
+    vi.mocked(db.select)
+      .mockReturnValueOnce(makeChain([LESSON_1, LESSON_2]) as never)
+      .mockReturnValueOnce(makeChain([{ count: 2 }]) as never); // count query
 
     const res = await app.request("/api/v1/lessons");
     expect(res.status).toBe(200);
@@ -94,7 +96,9 @@ describe("CHK-037: GET /api/v1/lessons", () => {
   });
 
   it("filters by category query param", async () => {
-    vi.mocked(db.select).mockReturnValueOnce(makeChain([LESSON_1]) as never);
+    vi.mocked(db.select)
+      .mockReturnValueOnce(makeChain([LESSON_1]) as never)
+      .mockReturnValueOnce(makeChain([{ count: 1 }]) as never);
 
     const res = await app.request("/api/v1/lessons?category=nutrition");
     expect(res.status).toBe(200);
@@ -103,7 +107,9 @@ describe("CHK-037: GET /api/v1/lessons", () => {
   });
 
   it("supports pagination (limit and offset)", async () => {
-    vi.mocked(db.select).mockReturnValueOnce(makeChain([LESSON_1]) as never);
+    vi.mocked(db.select)
+      .mockReturnValueOnce(makeChain([LESSON_1]) as never)
+      .mockReturnValueOnce(makeChain([{ count: 22 }]) as never);
 
     const res = await app.request("/api/v1/lessons?limit=10&offset=0");
     expect(res.status).toBe(200);
@@ -196,7 +202,9 @@ describe("CHK-037: Lesson service pure functions", () => {
   });
 
   it("getLessons returns array from db", async () => {
-    vi.mocked(db.select).mockReturnValueOnce(makeChain([LESSON_1, LESSON_2]) as never);
+    vi.mocked(db.select)
+      .mockReturnValueOnce(makeChain([LESSON_1, LESSON_2]) as never)
+      .mockReturnValueOnce(makeChain([{ count: 2 }]) as never);
 
     const { getLessons } = await import("@/server/services/lesson-service");
     const result = await getLessons({});

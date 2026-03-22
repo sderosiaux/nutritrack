@@ -102,14 +102,17 @@ describe("CHK-011: Barcode lookup", () => {
     expect(fetchFoodFromOpenFoodFacts).not.toHaveBeenCalled();
   });
 
-  it("returns 401 when unauthenticated", async () => {
+  it("returns 404 when unauthenticated and barcode not found (barcode is public)", async () => {
     const { getSessionFromRequest } = await import("@/server/auth");
     vi.mocked(getSessionFromRequest).mockResolvedValueOnce(null);
+    const { getFoodByBarcode, fetchFoodFromOpenFoodFacts } = await import("@/server/services/food-service");
+    vi.mocked(getFoodByBarcode).mockResolvedValueOnce(null);
+    vi.mocked(fetchFoodFromOpenFoodFacts).mockResolvedValueOnce(null);
 
     const { app } = await import("@/server/api");
     const res = await app.fetch(
       new Request("http://localhost/api/v1/foods/barcode/1234567890")
     );
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(404);
   });
 });
