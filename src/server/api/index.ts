@@ -12,6 +12,7 @@ import { profile } from "./routes/profile";
 import { users } from "./routes/users";
 import { recognize } from "./routes/recognize";
 import { analytics } from "./routes/analytics";
+import { openapiRoute } from "./routes/openapi";
 import { sessionMiddleware } from "./middleware/auth";
 
 const app = new Hono().basePath("/api/v1");
@@ -28,6 +29,9 @@ app.use("*", sessionMiddleware);
 
 // Health check — no auth required
 app.route("/", health);
+
+// OpenAPI spec — no auth required
+app.route("/", openapiRoute);
 
 // Food database
 app.route("/foods", foods);

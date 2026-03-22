@@ -25,6 +25,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body>
+        {/* Skip navigation — WCAG AA: keyboard users skip to main content */}
+        <a href="#main-content" className="skip-nav">
+          Skip to main content
+        </a>
         <QueryProvider>
           {children}
           <ServiceWorkerRegister />

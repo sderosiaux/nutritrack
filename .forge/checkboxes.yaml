@@ -509,8 +509,8 @@
   source: "spec/06-ux-design.md:§Motion & Transitions"
   milestone: "M6"
   lane: 13
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk046-motion.test.ts"
   commit: null
 
 - id: "CHK-047"
@@ -518,8 +518,8 @@
   source: "spec/06-ux-design.md:§Accessibility"
   milestone: "M6"
   lane: 13
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk047-a11y.test.tsx"
   commit: null
 
 # ── M7: Self-Hosting & Docs ───────────────────────────────────
@@ -529,8 +529,8 @@
   source: "spec/08-milestones.md:§Milestone 7"
   milestone: "M7"
   lane: 13
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk048-docker.test.ts"
   commit: null
 
 - id: "CHK-049"
@@ -538,8 +538,8 @@
   source: "spec/08-milestones.md:§Milestone 7"
   milestone: "M7"
   lane: 13
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk049-docs.test.ts"
   commit: null
 
 - id: "CHK-059"
@@ -547,6 +547,6 @@
   source: "spec/05-tech-stack.md:§Developer Experience"
   milestone: "M7"
   lane: 13
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk059-openapi.test.ts"
   commit: null

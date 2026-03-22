@@ -73,3 +73,170 @@
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
+
+/* ── Accessibility ─────────────────────────────────────────────── */
+
+/* Screen-reader only — visually hidden but accessible */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Skip nav link — hidden until focused */
+.skip-nav {
+  position: absolute;
+  top: -100%;
+  left: 1rem;
+  z-index: 9999;
+  padding: 0.5rem 1rem;
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 150ms ease;
+}
+
+.skip-nav:focus {
+  top: 1rem;
+}
+
+/* Min touch target — WCAG AA: 44×44px */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ── Motion & Animations ───────────────────────────────────────── */
+
+/* Stagger delay custom property */
+.stagger-item {
+  --stagger-delay: 0ms;
+  animation-delay: var(--stagger-delay);
+}
+
+/* Page transition — 150ms fade */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Toast slide-up from bottom */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Calorie ring fill animation */
+@keyframes ring-fill {
+  from {
+    stroke-dashoffset: var(--ring-circumference, 565);
+  }
+  to {
+    stroke-dashoffset: var(--ring-target, 0);
+  }
+}
+
+/* Number count-up animation (visual pulse) */
+@keyframes count-up {
+  from {
+    opacity: 0.6;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Celebration bounce */
+@keyframes bounce-in {
+  0% { transform: scale(0.8); opacity: 0; }
+  60% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Animation utility classes */
+.animate-fade-in {
+  animation: fade-in 150ms ease-out both;
+}
+
+.animate-slide-up {
+  animation: slide-up 200ms ease-out both;
+}
+
+.animate-ring-fill {
+  animation: ring-fill 600ms ease-out forwards;
+}
+
+.animate-count-up {
+  animation: count-up 200ms ease-out both;
+}
+
+.animate-bounce-in {
+  animation: bounce-in 300ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+/* Sidebar expand/collapse transition */
+.sidebar-transition {
+  transition: width 200ms cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 150ms ease;
+}
+
+/* Bottom sheet spring animation */
+.bottom-sheet-transition {
+  transition: transform 300ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Modal open/close */
+.modal-transition {
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+
+/* ── Reduced Motion ─────────────────────────────────────────────── */
+
+/* Disable ALL transitions and animations for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-fade-in,
+  .animate-slide-up,
+  .animate-ring-fill,
+  .animate-count-up,
+  .animate-bounce-in {
+    animation: none !important;
+  }
+
+  .sidebar-transition,
+  .bottom-sheet-transition,
+  .modal-transition {
+    transition: none !important;
+  }
+}

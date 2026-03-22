@@ -13,7 +13,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Main content area */}
       <div className="flex flex-1 flex-col overflow-hidden">
         <BackupBanner />
-        <main className="flex-1 overflow-y-auto pb-16 sm:pb-0">
+        {/* aria-live: announces dynamic content changes (calorie updates, search results) */}
+        <div
+          aria-live="polite"
+          aria-atomic="true"
+          className="sr-only"
+          id="live-announcer"
+        />
+        <main id="main-content" className="flex-1 overflow-y-auto pb-16 sm:pb-0">
           {children}
         </main>
       </div>
