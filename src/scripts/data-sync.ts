@@ -56,7 +56,7 @@ const USDA_CSV_URL = "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_csv
 
 const DATA_DIR = join(process.cwd(), "data");
 const META_FILE = join(DATA_DIR, ".sync-meta.json");
-const BATCH_SIZE = 5000;
+const BATCH_SIZE = 2000; // 16 columns × 2000 = 32k params (under PG's 65534 limit)
 const MAX_DOWNLOAD_SIZE = 10 * 1024 * 1024 * 1024; // 10GB hard limit
 
 // USDA nutrient IDs
@@ -71,16 +71,19 @@ const NUTRIENT_SAT_FAT = 1258;
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-function num(v: string | undefined | null): number {
+function num(v: string | undefined | null, max = 99999): number {
   if (!v || v === "") return 0;
   const n = parseFloat(v);
-  return isNaN(n) ? 0 : n;
+  if (isNaN(n) || !isFinite(n) || n < 0) return 0;
+  return Math.min(n, max);
 }
 
-function numOrNull(v: string | undefined | null): number | null {
+function numOrNull(v: string | undefined | null, max = 99999): number | null {
   if (!v || v === "") return null;
   const n = parseFloat(v);
-  return isNaN(n) ? null : n;
+  if (isNaN(n) || !isFinite(n)) return null;
+  if (n < 0) return 0;
+  return Math.min(n, max);
 }
 
 function loadMeta(): SyncMeta {
@@ -122,13 +125,13 @@ export function parseOffRow(row: Record<string, string>): FoodRow | null {
     source: "open_food_facts",
     sourceId: code,
     caloriesPer100g: cal,
-    proteinPer100g: num(row["proteins_100g"]),
-    carbsPer100g: num(row["carbohydrates_100g"]),
-    fatPer100g: num(row["fat_100g"]),
-    fiberPer100g: num(row["fiber_100g"]),
-    sugarPer100g: numOrNull(row["sugars_100g"]),
-    sodiumMgPer100g: sodiumG !== null ? sodiumG * 1000 : null,
-    saturatedFatPer100g: numOrNull(row["saturated-fat_100g"]),
+    proteinPer100g: num(row["proteins_100g"], 9999),
+    carbsPer100g: num(row["carbohydrates_100g"], 9999),
+    fatPer100g: num(row["fat_100g"], 9999),
+    fiberPer100g: num(row["fiber_100g"], 9999),
+    sugarPer100g: numOrNull(row["sugars_100g"], 9999),
+    sodiumMgPer100g: sodiumG !== null ? Math.min(sodiumG * 1000, 999999) : null,
+    saturatedFatPer100g: numOrNull(row["saturated-fat_100g"], 9999),
     category: row["categories_en"]?.split(",")[0]?.trim() || null,
     verified: false,
   };
@@ -142,7 +145,7 @@ export function parseOffServing(row: Record<string, string>): ServingRow | null 
   // Try extracting gram value from parentheses first: "1 cup (240g)" → 240
   const gramMatch = servingSize.match(/\((\d+(?:\.\d+)?)\s*g\)/i);
   const weightG = gramMatch ? parseFloat(gramMatch[1]) : parseFloat(servingSize);
-  if (isNaN(weightG) || weightG <= 0) return null;
+  if (isNaN(weightG) || weightG <= 0 || weightG > 99999) return null;
 
   return {
     id: `off-${code}-ss0`,
@@ -223,14 +226,14 @@ async function resetStagingTables(sql: postgres.Sql): Promise<void> {
       barcode text,
       source text NOT NULL,
       source_id text,
-      calories_per_100g numeric(7,2) NOT NULL DEFAULT 0,
-      protein_per_100g numeric(6,2) NOT NULL DEFAULT 0,
-      carbs_per_100g numeric(6,2) NOT NULL DEFAULT 0,
-      fat_per_100g numeric(6,2) NOT NULL DEFAULT 0,
-      fiber_per_100g numeric(6,2) NOT NULL DEFAULT 0,
-      sugar_per_100g numeric(6,2),
-      sodium_mg_per_100g numeric(8,2),
-      saturated_fat_per_100g numeric(6,2),
+      calories_per_100g numeric NOT NULL DEFAULT 0,
+      protein_per_100g numeric NOT NULL DEFAULT 0,
+      carbs_per_100g numeric NOT NULL DEFAULT 0,
+      fat_per_100g numeric NOT NULL DEFAULT 0,
+      fiber_per_100g numeric NOT NULL DEFAULT 0,
+      sugar_per_100g numeric,
+      sodium_mg_per_100g numeric,
+      saturated_fat_per_100g numeric,
       category text,
       verified boolean NOT NULL DEFAULT false
     ) ON COMMIT PRESERVE ROWS
@@ -240,7 +243,7 @@ async function resetStagingTables(sql: postgres.Sql): Promise<void> {
       id text PRIMARY KEY,
       food_id text NOT NULL,
       label text NOT NULL,
-      weight_g numeric(7,2) NOT NULL
+      weight_g numeric NOT NULL
     ) ON COMMIT PRESERVE ROWS
   `;
   await sql`TRUNCATE foods_staging`;
@@ -363,6 +366,12 @@ async function downloadWithEtag(
   destPath: string,
   etag?: string
 ): Promise<{ path: string; etag?: string; skipped: boolean }> {
+  // Skip download if file already exists on disk (e.g. meta was cleared but file kept)
+  if (!etag && existsSync(destPath)) {
+    console.log(`  File already on disk, skipping download`);
+    return { path: destPath, skipped: false };
+  }
+
   const headers: Record<string, string> = {};
   if (etag) headers["If-None-Match"] = etag;
 
