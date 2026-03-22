@@ -316,7 +316,7 @@
   lane: 8
   status: "DONE"
   test: "src/__tests__/chk027-image-upload.test.ts"
-  commit: null
+  commit: "c099bf3"
 
 - id: "CHK-028"
   description: "BullMQ analyze-photo job: enqueue on upload, status tracking via SSE endpoint GET /api/v1/photos/:jobId/status, returns [{name, weightG, confidence}]"
@@ -325,7 +325,7 @@
   lane: 8
   status: "DONE"
   test: "src/__tests__/chk028-vision-queue.test.ts"
-  commit: null
+  commit: "c099bf3"
 
 - id: "CHK-029"
   description: "Vision provider integrations: Ollama (LLaVA/moondream2, local) as Option A, OpenAI GPT-4o Vision as Option B, Gemini Flash (free tier) as Option C. VISION_PROVIDER=ollama|openai|gemini env switch. Structured output: JSON [{name, weightG, confidence}]."
@@ -334,7 +334,7 @@
   lane: 8
   status: "DONE"
   test: "src/__tests__/chk029-vision-providers.test.ts"
-  commit: null
+  commit: "c099bf3"
 
 - id: "CHK-030"
   description: "Photo capture UI (S-LOG-2) + recognition results screen (S-LOG-3): full-screen camera viewfinder, gallery picker, capture → loading state (SSE poll) → results list (editable name, editable weight spinner, live kcal preview, remove button), 'Add item manually' button, meal slot selector, confirm"
@@ -343,7 +343,7 @@
   lane: 8
   status: "DONE"
   test: "src/__tests__/chk030-photo-capture.test.tsx"
-  commit: null
+  commit: "c099bf3"
 
 - id: "CHK-031"
   description: "Voice input UI (S-LOG-8): Web Speech API, animated waveform, live transcription display, recognized item chips (editable), confirm flow → adds to selected meal slot"
@@ -352,7 +352,7 @@
   lane: 8
   status: "DONE"
   test: "src/__tests__/chk031-voice-input.test.tsx"
-  commit: null
+  commit: "c099bf3"
 
 - id: "CHK-056"
   description: "Quick-add free-text NLP parsing: text input 'two eggs and oatmeal 80g', LLM/regex parse → bulk-populate food search suggestions with estimated weights, user confirms each item before adding to meal"
@@ -361,7 +361,7 @@
   lane: 8
   status: "DONE"
   test: "src/__tests__/chk056-quick-add.test.ts"
-  commit: null
+  commit: "c099bf3"
 
 # ── M4: Analytics ──────────────────────────────────────────────
 
