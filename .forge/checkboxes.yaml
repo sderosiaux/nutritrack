@@ -139,7 +139,7 @@
   lane: 4
   status: "DONE"
   test: "src/__tests__/chk012-meal-logging.test.ts:1"
-  commit: "PLACEHOLDER"
+  commit: "9b15cea"
 
 - id: "CHK-013"
   description: "Water entry API: POST/DELETE /api/v1/logs/:date/water"
@@ -148,7 +148,7 @@
   lane: 4
   status: "DONE"
   test: "src/__tests__/chk013-water-logging.test.ts:1"
-  commit: "PLACEHOLDER"
+  commit: "9b15cea"
 
 - id: "CHK-014"
   description: "Daily log API: GET /api/v1/logs/:date — returns DailySummary (computed query, not stored): meals by slot, water entries, weight entry, activities, calorie/macro totals vs targets"
@@ -157,7 +157,7 @@
   lane: 4
   status: "DONE"
   test: "src/__tests__/chk014-daily-log.test.ts:1"
-  commit: "PLACEHOLDER"
+  commit: "9b15cea"
 
 - id: "CHK-015"
   description: "Today dashboard UI (S-DASH-1): calorie ring (180px mobile / 220px tablet, amber fill, overflow → rose-500 ring + text, 600ms ease-out fill animation, tap → nutrition breakdown), macro bars (4 bars, spec colors, tap → sources), meal cards per slot, S-DASH-2 slot expansion (all entries, macros per row, swipe edit/delete), hydration tile (+250ml/+500ml quick-add), weight tile, activity tile, day swipe navigation, pull-to-refresh"
