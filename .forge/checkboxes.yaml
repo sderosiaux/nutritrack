@@ -222,7 +222,7 @@
   lane: 6
   status: "DONE"
   test: "src/__tests__/chk019-onboarding.test.tsx"
-  commit: null
+  commit: "d7b3497"
 
 - id: "CHK-020"
   description: "TDEE calculation engine: Mifflin-St Jeor BMR (sex-specific), activity multiplier, calorie target per goal (maintain/lose/build), default macro split (protein 20% / fat 30% / carbs 50% per WHO/DRI). Manual macro override with redistribution: editing one macro auto-recalculates remaining calories across the others."
@@ -231,7 +231,7 @@
   lane: 6
   status: "DONE"
   test: "src/__tests__/chk020-tdee.test.ts"
-  commit: null
+  commit: "d7b3497"
 
 - id: "CHK-021"
   description: "Profile API: GET /api/v1/profile, PUT /api/v1/profile, POST /api/v1/profile/recalculate-targets (recomputes DailyTargets from current UserProfile)"
@@ -240,7 +240,7 @@
   lane: 6
   status: "DONE"
   test: "src/__tests__/chk021-profile-api.test.ts"
-  commit: null
+  commit: "d7b3497"
 
 - id: "CHK-022"
   description: "Profile editor UI (S-PROFILE-1, S-PROFILE-2): goals editor, body metrics, dietary preferences + allergies, notification settings (per-slot meal reminder schedule), units/language selector, recalculate targets button with live preview"
@@ -249,7 +249,7 @@
   lane: 6
   status: "DONE"
   test: "src/__tests__/chk022-profile-editor.test.tsx"
-  commit: null
+  commit: "d7b3497"
 
 - id: "CHK-023"
   description: "Wire dashboard calorie ring and macro bars to user's personal DailyTargets; ring + bars show target-relative progress once onboarding is complete"
@@ -258,7 +258,7 @@
   lane: 6
   status: "DONE"
   test: "src/__tests__/chk023-dashboard-targets.test.tsx"
-  commit: null
+  commit: "d7b3497"
 
 - id: "CHK-055"
   description: "Account deletion: DELETE /api/v1/users/me (purges all user data + entries), 'Delete all data' and 'Account deletion' actions in S-PROFILE-3 with confirmation dialog; full S-PROFILE-3 screen (export + delete all data + account deletion + privacy policy link)"
@@ -267,7 +267,7 @@
   lane: 6
   status: "DONE"
   test: "src/__tests__/chk055-account-deletion.test.ts"
-  commit: null
+  commit: "d7b3497"
 
 - id: "CHK-058"
   description: "Weekly check-in interactive flow (Flow 6): BullMQ weekly-summary job triggers notification → weigh-in prompt screen (current weight input, delta from last week displayed) → optional goal pace adjustment if off-track → lesson recommendation based on progress"
@@ -276,7 +276,7 @@
   lane: 6
   status: "DONE"
   test: "src/__tests__/chk058-weekly-checkin.test.tsx"
-  commit: null
+  commit: "d7b3497"
 
 # ── M2+: Weight & Activity ─────────────────────────────────────
 
