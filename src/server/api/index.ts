@@ -3,6 +3,8 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { health } from "./routes/health";
 import { foods } from "./routes/foods";
+import { logs } from "./routes/logs";
+import { lessons } from "./routes/lessons";
 import { sessionMiddleware } from "./middleware/auth";
 
 const app = new Hono().basePath("/api/v1");
@@ -22,6 +24,12 @@ app.route("/", health);
 
 // Food database
 app.route("/foods", foods);
+
+// Daily logging (meals, water)
+app.route("/logs", logs);
+
+// Educational content
+app.route("/lessons", lessons);
 
 // 404 fallback
 app.notFound((c) => {
