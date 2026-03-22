@@ -366,7 +366,7 @@ async function downloadWithEtag(
   const headers: Record<string, string> = {};
   if (etag) headers["If-None-Match"] = etag;
 
-  const res = await fetch(url, { headers, redirect: "error" });
+  const res = await fetch(url, { headers, redirect: "follow" });
 
   if (res.status === 304) {
     console.log(`  Skipped (304 Not Modified)`);
