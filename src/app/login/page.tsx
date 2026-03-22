@@ -84,7 +84,7 @@ export default function LoginPage() {
         <p className="mt-6 text-center text-sm text-[var(--color-text-muted)]">
           Don&apos;t have an account?{" "}
           <Link href="/register" className="text-[var(--color-primary)] hover:underline">
-            Sign in
+            Sign up
           </Link>
         </p>
       </div>

@@ -10,6 +10,7 @@ import {
   integer,
   pgEnum,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { user } from "./auth";
 
@@ -91,6 +92,6 @@ export const dailyTargets = pgTable(
     calculatedAt: timestamp("calculated_at").notNull().defaultNow(),
   },
   (t) => [
-    index("daily_targets_user_date_idx").on(t.userId, t.date),
+    uniqueIndex("daily_targets_user_date_idx").on(t.userId, t.date),
   ]
 );

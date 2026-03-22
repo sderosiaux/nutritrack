@@ -110,16 +110,16 @@ describe("CHK-050: Zustand UI store", () => {
     useUIStore.getState().setSelectedDate(new Date().toISOString().split("T")[0]);
   });
 
-  it("sidebarOpen defaults to false", () => {
+  it("sidebarOpen defaults to true (expanded on desktop)", () => {
     const state = useUIStore.getState();
-    expect(state.sidebarOpen).toBe(false);
+    expect(state.sidebarOpen).toBe(true);
   });
 
   it("toggleSidebar flips sidebarOpen", () => {
     useUIStore.getState().toggleSidebar();
-    expect(useUIStore.getState().sidebarOpen).toBe(true);
-    useUIStore.getState().toggleSidebar();
     expect(useUIStore.getState().sidebarOpen).toBe(false);
+    useUIStore.getState().toggleSidebar();
+    expect(useUIStore.getState().sidebarOpen).toBe(true);
   });
 });
 

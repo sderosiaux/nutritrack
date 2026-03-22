@@ -4,7 +4,7 @@
  */
 import { db } from "@/server/db";
 import { lessons, lessonProgress } from "@/server/db/schema/content";
-import { eq, and, isNotNull, sql } from "drizzle-orm";
+import { eq, and, isNotNull, sql, count } from "drizzle-orm";
 
 export type LessonCategory =
   | "nutrition"
@@ -76,9 +76,15 @@ export async function getLessons(
 
   const rows = await query;
 
+  const countCond = opts.category
+    ? and(isNotNull(lessons.publishedAt), eq(lessons.category, opts.category))
+    : isNotNull(lessons.publishedAt);
+  const countRows = await db.select({ count: count() }).from(lessons).where(countCond);
+  const total = Number(countRows[0]?.count ?? rows.length);
+
   return {
     lessons: rows as LessonSummary[],
-    total: rows.length,
+    total,
   };
 }
 

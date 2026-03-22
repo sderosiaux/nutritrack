@@ -280,7 +280,7 @@ ALTER TABLE "water_entries" ADD CONSTRAINT "water_entries_user_id_user_id_fk" FO
 ALTER TABLE "weight_entries" ADD CONSTRAINT "weight_entries_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "account_user_idx" ON "account" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "activity_entries_user_date_idx" ON "activity_entries" USING btree ("user_id","date");--> statement-breakpoint
-CREATE INDEX "daily_targets_user_date_idx" ON "daily_targets" USING btree ("user_id","date");--> statement-breakpoint
+CREATE UNIQUE INDEX "daily_targets_user_date_idx" ON "daily_targets" USING btree ("user_id","date");--> statement-breakpoint
 CREATE INDEX "favorite_recipes_user_idx" ON "favorite_recipes" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "food_favorites_user_idx" ON "food_favorites" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "foods_name_idx" ON "foods" USING btree ("name");--> statement-breakpoint

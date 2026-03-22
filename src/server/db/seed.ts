@@ -4,7 +4,11 @@
  * Run via: pnpm db:seed
  */
 import { SEED_FOODS } from "./seed-data/foods";
-import { foods, servingSizes, user } from "./schema";
+import { seedLessons } from "./seed-data/lessons";
+import { SEED_RECIPES } from "./seed-data/recipes";
+import { EXERCISE_SEED_A } from "./seed-data/exercise-seed-a";
+import { EXERCISE_SEED_B } from "./seed-data/exercise-seed-b";
+import { foods, servingSizes, user, lessons, recipes, exercises } from "./schema";
 
 type InsertableDb = {
   insert: (table: unknown) => {
@@ -13,6 +17,14 @@ type InsertableDb = {
     };
   };
 };
+
+const CHUNK = 200; // Drizzle mergeQueries stack-overflows on large batches
+
+function chunk<T>(arr: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+}
 
 /** Insert seed foods + serving sizes into the database. */
 export async function seedFoods(db: InsertableDb): Promise<void> {
@@ -25,7 +37,9 @@ export async function seedFoods(db: InsertableDb): Promise<void> {
     updatedAt: new Date(),
   }));
 
-  await db.insert(foods).values(foodRows).onConflictDoNothing();
+  for (const batch of chunk(foodRows, CHUNK)) {
+    await db.insert(foods).values(batch).onConflictDoNothing();
+  }
 
   const servingRows = SEED_FOODS.flatMap((f) =>
     f.servingSizes.map((ss) => ({
@@ -36,7 +50,9 @@ export async function seedFoods(db: InsertableDb): Promise<void> {
     }))
   );
 
-  await db.insert(servingSizes).values(servingRows).onConflictDoNothing();
+  for (const batch of chunk(servingRows, CHUNK)) {
+    await db.insert(servingSizes).values(batch).onConflictDoNothing();
+  }
 }
 
 /** Insert a demo user for development/onboarding testing. */
@@ -51,10 +67,73 @@ export async function seedDemoUser(db: InsertableDb): Promise<void> {
   } as never).onConflictDoNothing();
 }
 
+/** Insert lesson seed data. */
+export async function seedLessonsData(db: InsertableDb): Promise<void> {
+  const rows = seedLessons.map((l) => ({
+    id: l.id,
+    slug: l.slug,
+    title: l.title,
+    summary: l.summary,
+    bodyMarkdown: l.bodyMarkdown,
+    category: l.category,
+    tags: l.tags,
+    readTimeMin: l.readTimeMin,
+    order: l.order,
+    publishedAt: l.publishedAt,
+  }));
+  for (const batch of chunk(rows, CHUNK)) {
+    await db.insert(lessons).values(batch).onConflictDoNothing();
+  }
+}
+
+/** Insert recipe seed data. */
+export async function seedRecipesData(db: InsertableDb): Promise<void> {
+  const rows = SEED_RECIPES.map((r) => ({
+    id: r.id,
+    title: r.title,
+    description: r.description,
+    servings: r.servings,
+    prepTimeMins: r.prepTimeMins,
+    cookTimeMins: r.cookTimeMins,
+    difficulty: r.difficulty,
+    tags: r.tags,
+    steps: r.steps,
+    caloriesPerServing: r.caloriesPerServing,
+    proteinPerServing: r.proteinPerServing,
+    carbsPerServing: r.carbsPerServing,
+    fatPerServing: r.fatPerServing,
+    fiberPerServing: r.fiberPerServing,
+    source: r.source,
+    published: (r as { published?: boolean }).published ?? true,
+  }));
+  for (const batch of chunk(rows, CHUNK)) {
+    await db.insert(recipes).values(batch).onConflictDoNothing();
+  }
+}
+
+/** Insert exercise seed data. */
+export async function seedExercisesData(db: InsertableDb): Promise<void> {
+  const all = [...EXERCISE_SEED_A, ...EXERCISE_SEED_B];
+  const rows = all.map((e) => ({
+    id: e.id,
+    name: e.name,
+    category: e.category,
+    metValue: String(e.metValue),
+    metLow: String(e.metLow),
+    metHigh: String(e.metHigh),
+  }));
+  for (const batch of chunk(rows, CHUNK)) {
+    await db.insert(exercises).values(batch).onConflictDoNothing();
+  }
+}
+
 /** Seed everything: foods, serving sizes, and demo user. */
 export async function seedAll(db: InsertableDb): Promise<void> {
   await seedFoods(db);
   await seedDemoUser(db);
+  await seedLessonsData(db);
+  await seedRecipesData(db);
+  await seedExercisesData(db);
 }
 
 async function main() {
@@ -70,7 +149,7 @@ async function main() {
 
   console.log("Seed: starting");
   await seedAll(db as never);
-  console.log(`Seed: inserted ${SEED_FOODS.length} foods + demo user`);
+  console.log(`Seed: inserted ${SEED_FOODS.length} foods, lessons, recipes, exercises + demo user`);
 
   await client.end();
 }

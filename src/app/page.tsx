@@ -31,7 +31,7 @@ export default function LandingPage() {
       {/* CTAs */}
       <div className="flex w-full max-w-xs flex-col gap-3">
         <Button asChild size="lg" className="w-full">
-          <Link href="/onboarding">Get Started</Link>
+          <Link href="/register">Get Started</Link>
         </Button>
 
         <Button asChild variant="outline" size="lg" className="w-full">

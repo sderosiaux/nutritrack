@@ -3,7 +3,7 @@
  * No @hono/zod-validator — manual safeParse + 422 at route level.
  */
 import { db, recipes, recipeIngredients, favoriteRecipes, mealEntries } from "@/server/db";
-import { eq, and, or, ilike, desc, inArray } from "drizzle-orm";
+import { eq, and, or, ilike, desc, inArray, count, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -168,6 +168,7 @@ export async function getRecipes(params: {
   }
 
   const ingMap = await loadIngredients(rows.map((r) => r.id));
+  void ingMap; // loaded for future ingredient embedding; not used in summary
   const summaries = rows.map((r) => rowToSummary(r));
 
   // Apply category filter on tags array (client-side since tags is text[])
@@ -175,7 +176,11 @@ export async function getRecipes(params: {
     ? summaries.filter((r) => r.tags.some((t) => t.toLowerCase() === category.toLowerCase()))
     : summaries;
 
-  return { recipes: filtered, total: filtered.length };
+  // Count total for pagination (without limit/offset)
+  const countRows = await db.select({ count: count() }).from(recipes).where(visibilityCond);
+  const total = Number(countRows[0]?.count ?? filtered.length);
+
+  return { recipes: filtered, total };
 }
 
 // ── Detail ─────────────────────────────────────────────────────────────────

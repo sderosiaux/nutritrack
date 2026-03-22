@@ -1,18 +1,18 @@
 /**
  * Food database routes: search, detail, recent, favorites, barcode, custom CRUD.
- * All routes require authentication via requireAuth middleware.
+ * Search, detail, and barcode are public (guest mode). Write endpoints require auth.
  */
 import { Hono } from "hono";
 import { z } from "zod";
-import { requireAuth } from "../middleware/auth";
+import { requireAuth, sessionMiddleware } from "../middleware/auth";
 import * as foodService from "@/server/services/food-service";
 
 type Env = { Variables: { session: { user: { id: string; email: string; name?: string } } | null } };
 
 const router = new Hono<Env>();
 
-// All food routes require auth
-router.use("*", requireAuth);
+// Attach session for all routes (without requiring it)
+router.use("*", sessionMiddleware);
 
 // ── Static routes (must precede /:id) ──────────────────────────────────────
 
@@ -22,7 +22,7 @@ router.get("/search", async (c) => {
 
   const limit = Math.min(parseInt(c.req.query("limit") ?? "20", 10) || 20, 100);
   const offset = parseInt(c.req.query("offset") ?? "0", 10) || 0;
-  const userId = c.get("session")!.user.id;
+  const userId = c.get("session")?.user.id; // optional — guests get no recent boost
 
   const result = await foodService.searchFoods({ q, limit, offset, userId });
   return c.json({ ...result, source: "local" });
@@ -68,7 +68,7 @@ const createFoodSchema = z.object({
   sodiumMgPer100g: z.number().min(0).optional(),
 });
 
-router.post("/", async (c) => {
+router.post("/", requireAuth, async (c) => {
   let body: unknown;
   try {
     body = await c.req.json();
@@ -95,7 +95,7 @@ router.get("/:id", async (c) => {
   return c.json(food);
 });
 
-router.put("/:id", async (c) => {
+router.put("/:id", requireAuth, async (c) => {
   const id = c.req.param("id");
   const userId = c.get("session")!.user.id;
   let body: unknown;
@@ -115,7 +115,7 @@ router.put("/:id", async (c) => {
   }
 });
 
-router.delete("/:id", async (c) => {
+router.delete("/:id", requireAuth, async (c) => {
   const id = c.req.param("id");
   const userId = c.get("session")!.user.id;
   try {

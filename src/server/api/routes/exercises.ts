@@ -57,7 +57,8 @@ router.get("/", async (c) => {
     ? await db.select().from(exercises).where(and(...conditions)).orderBy(exercises.name)
     : await db.select().from(exercises).orderBy(exercises.name);
 
-  return c.json({ items: rows.map(rowToExercise) });
+  const items = rows.map(rowToExercise);
+  return c.json({ items, total: items.length });
 });
 
 // GET /api/v1/exercises/:id
