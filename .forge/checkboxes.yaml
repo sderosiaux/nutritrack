@@ -473,8 +473,8 @@
   source: "spec/08-milestones.md:§Milestone 6"
   milestone: "M6"
   lane: 12
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk043-pwa-manifest.test.ts src/__tests__/chk043-install-prompt.test.tsx"
   commit: null
 
 - id: "CHK-044"
@@ -482,8 +482,8 @@
   source: "spec/05-tech-stack.md:§Frontend"
   milestone: "M6"
   lane: 12
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk044-offline-sync.test.ts"
   commit: null
 
 - id: "CHK-045"
@@ -491,8 +491,8 @@
   source: "spec/08-milestones.md:§Milestone 6"
   milestone: "M6"
   lane: 12
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk045-push-notifications.test.ts"
   commit: null
 
 - id: "CHK-057"
@@ -500,8 +500,8 @@
   source: "spec/05-tech-stack.md:§Backend"
   milestone: "M6"
   lane: 12
-  status: "pending"
-  test: null
+  status: "DONE"
+  test: "src/__tests__/chk057-email-jobs.test.ts"
   commit: null
 
 - id: "CHK-046"

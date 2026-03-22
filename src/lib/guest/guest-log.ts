@@ -47,6 +47,7 @@ export async function addGuestMealEntry(
     payload: JSON.stringify({ ...entry, id, createdAt }),
     createdAt,
     attempts: 0,
+    status: "pending" as const,
   });
   return id;
 }
@@ -64,6 +65,7 @@ export async function addGuestWaterEntry(
     payload: JSON.stringify({ ...entry, id, createdAt }),
     createdAt,
     attempts: 0,
+    status: "pending" as const,
   });
   return id;
 }
@@ -81,6 +83,7 @@ export async function addGuestWeightEntry(
     payload: JSON.stringify({ ...entry, id, createdAt }),
     createdAt,
     attempts: 0,
+    status: "pending" as const,
   });
   return id;
 }

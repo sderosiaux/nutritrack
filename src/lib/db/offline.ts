@@ -36,6 +36,7 @@ export interface SyncQueueItem {
   payload: string;      // JSON
   createdAt: number;
   attempts: number;
+  status: "pending" | "synced" | "failed";
 }
 
 export class NutriDB extends Dexie {
@@ -50,7 +51,7 @@ export class NutriDB extends Dexie {
       mealEntries: "++id, date, mealType, foodId",
       waterEntries: "++id, date",
       weightEntries: "++id, date",
-      syncQueue: "++id, table, createdAt",
+      syncQueue: "++id, table, createdAt, status",
     });
   }
 }

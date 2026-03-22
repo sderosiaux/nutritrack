@@ -7,6 +7,10 @@ import { logs } from "./routes/logs";
 import { lessons } from "./routes/lessons";
 import { recipes } from "./routes/recipes";
 import { exercisesRouter } from "./routes/exercises";
+import { notificationsRouter } from "./routes/notifications";
+import { profile } from "./routes/profile";
+import { users } from "./routes/users";
+import { recognize } from "./routes/recognize";
 import { sessionMiddleware } from "./middleware/auth";
 
 const app = new Hono().basePath("/api/v1");
@@ -38,6 +42,18 @@ app.route("/recipes", recipes);
 
 // Exercises (public read-only)
 app.route("/exercises", exercisesRouter);
+
+// Push notifications
+app.route("/notifications", notificationsRouter);
+
+// User profile + targets
+app.route("/profile", profile);
+
+// User account management (deletion)
+app.route("/users", users);
+
+// AI recognition (photo upload, vision providers)
+app.route("/recognize", recognize);
 
 // 404 fallback
 app.notFound((c) => {
