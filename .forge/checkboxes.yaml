@@ -511,7 +511,7 @@
   lane: 13
   status: "DONE"
   test: "src/__tests__/chk046-motion.test.ts"
-  commit: null
+  commit: "2ea53e6"
 
 - id: "CHK-047"
   description: "Accessibility audit (WCAG AA): min 44×44px tap targets on all interactive elements, keyboard navigation + visible focus rings (2px primary), aria labels on all icon-only buttons, color contrast ≥4.5:1 text / ≥3:1 UI components, no information conveyed by color alone (always text/icon backup), screen reader testing"
@@ -520,7 +520,7 @@
   lane: 13
   status: "DONE"
   test: "src/__tests__/chk047-a11y.test.tsx"
-  commit: null
+  commit: "2ea53e6"
 
 # ── M7: Self-Hosting & Docs ───────────────────────────────────
 
@@ -531,7 +531,7 @@
   lane: 13
   status: "DONE"
   test: "src/__tests__/chk048-docker.test.ts"
-  commit: null
+  commit: "2ea53e6"
 
 - id: "CHK-049"
   description: "Project documentation: README with screenshots + quick-start, self-hosting guide (Docker Compose setup, env vars, first run), contributing guide"
@@ -540,7 +540,7 @@
   lane: 13
   status: "DONE"
   test: "src/__tests__/chk049-docs.test.ts"
-  commit: null
+  commit: "2ea53e6"
 
 - id: "CHK-059"
   description: "OpenAPI spec auto-generation: wire Hono + Zod schema types to @hono/zod-openapi, serve GET /api/openapi.json and Swagger UI at /api/docs"
@@ -549,4 +549,4 @@
   lane: 13
   status: "DONE"
   test: "src/__tests__/chk059-openapi.test.ts"
-  commit: null
+  commit: "2ea53e6"
