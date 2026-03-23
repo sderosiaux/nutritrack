@@ -423,9 +423,9 @@ async function downloadWithEtag(
     await new Promise<void>((resolve) => fileStream.on("finish", resolve));
     renameSync(tmpPath, destPath);
   } catch (err) {
-    reader.cancel().catch(() => {});
+    reader.cancel().catch(() => { /* best effort */ });
     fileStream.destroy();
-    try { rmSync(tmpPath, { force: true }); } catch {}
+    try { rmSync(tmpPath, { force: true }); } catch { /* best effort */ }
     throw err;
   }
 
@@ -707,19 +707,17 @@ async function main() {
 
   const sql = postgres(url, { max: 1 });
   const totalStart = Date.now();
-  let totalFoods = 0;
 
   try {
-    // Drop GIN indexes before bulk load (3-5x faster upsert)
     console.log("Dropping GIN indexes for bulk load...");
     await dropSearchIndexes(sql);
 
     if (sourceArg === "all" || sourceArg === "off") {
-      totalFoods += await importOff(sql, limitArg);
+      await importOff(sql, limitArg);
     }
 
     if (sourceArg === "all" || sourceArg === "usda") {
-      totalFoods += await importUsda(sql, limitArg);
+      await importUsda(sql, limitArg);
     }
 
     // Rebuild indexes + update statistics

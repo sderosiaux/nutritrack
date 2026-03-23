@@ -50,7 +50,7 @@ export function FoodSearch({ onSelect, mealType, date: _date }: FoodSearchProps)
     fetch("/api/v1/foods/recent")
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => setRecentFoods(Array.isArray(data) ? data : []))
-      .catch(() => {});
+      .catch(() => { /* guest mode — no recent foods */ });
   }, []);
 
   const searchFoods = useCallback(async (q: string) => {
