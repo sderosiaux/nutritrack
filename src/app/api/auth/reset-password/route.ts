@@ -7,7 +7,8 @@ import { auth } from "@/server/auth";
  * /api/auth/reset-password endpoint. Dedicated route for explicit contract.
  */
 export async function POST(req: Request) {
+  const body = await req.text();
   const url = new URL(req.url);
   url.pathname = "/api/auth/reset-password";
-  return auth.handler(new Request(url.toString(), req));
+  return auth.handler(new Request(url.toString(), { method: "POST", headers: req.headers, body }));
 }
