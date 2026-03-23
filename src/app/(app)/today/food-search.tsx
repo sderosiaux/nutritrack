@@ -42,10 +42,19 @@ export function FoodSearch({ onSelect, mealType, date: _date }: FoodSearchProps)
   const [quantity, setQuantity] = useState(1);
   const [showBarcode, setShowBarcode] = useState(false);
   const [showCustomForm, setShowCustomForm] = useState(false);
+  const [recentFoods, setRecentFoods] = useState<FoodSearchResult[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Load recent foods on mount (for logged-in users)
+  useEffect(() => {
+    fetch("/api/v1/foods/recent")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setRecentFoods(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, []);
+
   const searchFoods = useCallback(async (q: string) => {
-    if (q.length < 1) {
+    if (q.length < 2) {
       setResults([]);
       return;
     }
@@ -57,8 +66,8 @@ export function FoodSearch({ onSelect, mealType, date: _date }: FoodSearchProps)
       if (filter === "generic") params.set("source", "usda");
       const res = await fetch(`/api/v1/foods/search?${params}`);
       if (res.ok) {
-        const data = await res.json() as { foods: FoodSearchResult[] };
-        setResults(data.foods ?? []);
+        const data = await res.json() as { items: FoodSearchResult[] };
+        setResults(data.items ?? []);
       }
     } finally {
       setLoading(false);
@@ -232,18 +241,25 @@ export function FoodSearch({ onSelect, mealType, date: _date }: FoodSearchProps)
       </div>
 
       {/* Results */}
-      <div className="flex flex-col gap-1" style={{ maxHeight: 280, overflowY: "auto" }}>
+      <div className="flex flex-col gap-1" style={{ maxHeight: 320, overflowY: "auto" }}>
         {loading && (
           <p style={{ fontSize: 13, color: "var(--color-text-muted)", padding: "8px 0" }}>
-            Searching...
+            Searching 2.5M+ foods...
           </p>
         )}
-        {!loading && query && results.length === 0 && (
+        {!loading && query.length >= 2 && results.length === 0 && (
           <p style={{ fontSize: 13, color: "var(--color-text-muted)", padding: "8px 0" }}>
             No results for &quot;{query}&quot;
           </p>
         )}
-        {results.map((food) => (
+        {!loading && query.length < 2 && recentFoods.length > 0 && (
+          <div>
+            <p style={{ fontSize: 12, fontWeight: 500, color: "var(--color-text-muted)", padding: "4px 0 8px" }}>
+              Recent
+            </p>
+          </div>
+        )}
+        {(query.length >= 2 ? results : recentFoods).map((food) => (
           <button
             key={food.id}
             onClick={() => handleSelectFood(food)}

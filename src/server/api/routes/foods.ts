@@ -16,12 +16,13 @@ const router = new Hono<Env>();
 // ── Static routes (must precede /:id) ──────────────────────────────────────
 
 router.get("/search", async (c) => {
-  const q = c.req.query("q");
-  if (!q) return c.json({ error: "q param required", code: "validation_error" }, 400);
+  const q = c.req.query("q")?.trim();
+  if (!q || q.length < 2) return c.json({ error: "q param required (min 2 chars)", code: "validation_error" }, 400);
+  if (q.length > 200) return c.json({ error: "q param too long (max 200 chars)", code: "validation_error" }, 400);
 
   const limit = Math.min(parseInt(c.req.query("limit") ?? "20", 10) || 20, 100);
   const offset = parseInt(c.req.query("offset") ?? "0", 10) || 0;
-  const userId = c.get("session")?.user.id; // optional — guests get no recent boost
+  const userId = c.get("session")?.user.id;
 
   const result = await foodService.searchFoods({ q, limit, offset, userId });
   return c.json({ ...result, source: "local" });
@@ -41,6 +42,9 @@ router.get("/favorites", async (c) => {
 
 router.get("/barcode/:barcode", async (c) => {
   const barcode = c.req.param("barcode");
+  if (!/^\d{4,14}$/.test(barcode)) {
+    return c.json({ error: "Invalid barcode format", code: "validation_error" }, 400);
+  }
   let food = await foodService.getFoodByBarcode(barcode);
   if (!food) {
     food = await foodService.fetchFoodFromOpenFoodFacts(barcode);

@@ -71,16 +71,16 @@ export function BarcodeScanner({ onFoodFound, onClose }: BarcodeScannerProps) {
         <div
           style={{
             background: "var(--color-surface-alt)",
-            border: "1px solid var(--color-border)",
+            border: "1px dashed var(--color-border)",
             borderRadius: "var(--radius-md)",
-            padding: "32px 16px",
+            padding: "24px 16px",
             textAlign: "center",
             color: "var(--color-text-muted)",
-            fontSize: 14,
+            fontSize: 13,
           }}
         >
-          <p>Camera scanning available</p>
-          <p style={{ fontSize: 12, marginTop: 4 }}>Point camera at barcode</p>
+          <p>Camera scanning coming soon</p>
+          <p style={{ fontSize: 12, marginTop: 4 }}>Enter the barcode number below</p>
         </div>
       )}
 
