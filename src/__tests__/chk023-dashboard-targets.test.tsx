@@ -96,25 +96,28 @@ describe("Dashboard — target wiring (CHK-023)", () => {
       if (typeof url === "string" && url.includes("/api/v1/profile")) {
         return Promise.resolve({ ok: false, status: 404, json: async () => ({ error: "not_found" }) });
       }
-      return Promise.resolve({
-        ok: true,
-        json: async () => ({
-          date: "2026-03-22",
-          totalCalories: 0,
-          totalProtein: 0,
-          totalCarbs: 0,
-          totalFat: 0,
-          totalFiber: 0,
-          waterMl: 0,
-          meals: [],
-        }),
-      });
+      if (typeof url === "string" && url.includes("/api/v1/logs/")) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            date: "2026-03-22",
+            totalCalories: 0,
+            totalProtein: 0,
+            totalCarbs: 0,
+            totalFat: 0,
+            totalFiber: 0,
+            waterMl: 0,
+            meals: [],
+          }),
+        });
+      }
+      return Promise.resolve({ ok: true, json: async () => ([]) });
     }) as unknown as typeof fetch;
 
     renderDashboard();
-    // Should render without crashing
+    // Should render without crashing — date subheader always shows the ISO date
     await waitFor(() => {
-      expect(screen.getByText(/today/i)).toBeInTheDocument();
+      expect(screen.getByLabelText("Previous day")).toBeInTheDocument();
     }, { timeout: 3000 });
   });
 });
