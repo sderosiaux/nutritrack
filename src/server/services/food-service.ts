@@ -135,12 +135,8 @@ export async function searchFoods(params: {
   const ftsCondition = sql`${foods}.search_vector @@ websearch_to_tsquery('english', ${trimmed})`;
   // Use % operator (GIN-indexed) instead of similarity() function (seq scan)
   const trgmCondition = sql`${foods.name} % ${trimmed}`;
-  // Multi-language: match nameTranslations JSONB values
-  const translationCondition = sql`(${foods.nameTranslations})::text ILIKE ${"%" + trimmed + "%"}`;
 
-  const searchCond = isMultiWord
-    ? or(ftsCondition, translationCondition)
-    : or(ftsCondition, trgmCondition, translationCondition);
+  const searchCond = isMultiWord ? ftsCondition : or(ftsCondition, trgmCondition);
 
   // Order by relevance: ts_rank for FTS, similarity for trigram
   const rankExpr = isMultiWord

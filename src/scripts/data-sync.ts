@@ -726,11 +726,16 @@ async function main() {
     console.log(`\nSync complete in ${elapsed(totalStart)}`);
     console.log(`Total foods in database: ${total.toLocaleString()}`);
   } finally {
-    // Always rebuild indexes, even on failure
-    await rebuildSearchIndexes(sql).catch(e => console.error("Failed to rebuild indexes:", e));
-    console.log("Running ANALYZE...");
-    await sql`ANALYZE foods`.catch(() => { /* best effort */ });
-    await sql`ANALYZE serving_sizes`.catch(() => { /* best effort */ });
+    // Always rebuild indexes, even on failure — this must succeed or the app is broken
+    try {
+      await rebuildSearchIndexes(sql);
+      console.log("Running ANALYZE...");
+      await sql`ANALYZE foods`;
+      await sql`ANALYZE serving_sizes`;
+    } catch (e) {
+      console.error("CRITICAL: Failed to rebuild search indexes:", e);
+      process.exitCode = 1;
+    }
     await sql.end();
   }
 }
