@@ -29,6 +29,13 @@
       "when": 1772500562804,
       "tag": "0003_push_subscriptions",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1772500562805,
+      "tag": "0004_search_vector_translations",
+      "breakpoints": true
     }
   ]
 }

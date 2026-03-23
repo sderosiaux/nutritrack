@@ -132,7 +132,7 @@ export async function searchFoods(params: {
   // For short/single-word queries, add trigram similarity (pg_trgm) for typo tolerance.
   const isMultiWord = trimmed.split(/\s+/).length >= 2;
 
-  const ftsCondition = sql`${foods}.search_vector @@ websearch_to_tsquery('english', ${trimmed})`;
+  const ftsCondition = sql`${foods}.search_vector @@ websearch_to_tsquery('simple', ${trimmed})`;
   // Use % operator (GIN-indexed) instead of similarity() function (seq scan)
   const trgmCondition = sql`${foods.name} % ${trimmed}`;
 
@@ -140,9 +140,9 @@ export async function searchFoods(params: {
 
   // Order by relevance: ts_rank for FTS, similarity for trigram
   const rankExpr = isMultiWord
-    ? sql`ts_rank(${foods}.search_vector, websearch_to_tsquery('english', ${trimmed}))`
+    ? sql`ts_rank(${foods}.search_vector, websearch_to_tsquery('simple', ${trimmed}))`
     : sql`GREATEST(
-        ts_rank(${foods}.search_vector, websearch_to_tsquery('english', ${trimmed})),
+        ts_rank(${foods}.search_vector, websearch_to_tsquery('simple', ${trimmed})),
         similarity(${foods.name}, ${trimmed})
       )`;
 
