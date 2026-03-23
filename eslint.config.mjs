@@ -32,9 +32,18 @@ export default tseslint.config(
       "src/server/api/routes/**/*.ts",
       "src/components/vision/**/*.tsx",
       "src/server/services/recipe-service.ts",
+      "src/server/services/push-service.ts",
     ],
     rules: {
       "@typescript-eslint/no-non-null-assertion": "off",
+    },
+  },
+
+  // Coach pages use <img> for local SVG illustrations (next/image unnecessary)
+  {
+    files: ["src/app/(app)/coach/**/*.tsx"],
+    rules: {
+      "@next/next/no-img-element": "off",
     },
   },
 

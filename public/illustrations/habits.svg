@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" fill="none">
+  <!-- Chain links representing habit stacking -->
+  <rect x="80" y="75" rx="12" ry="12" width="60" height="50" stroke="#16a34a" stroke-width="2.5" fill="#16a34a" opacity="0.1"/>
+  <rect x="130" y="75" rx="12" ry="12" width="60" height="50" stroke="#16a34a" stroke-width="2.5" fill="#16a34a" opacity="0.15"/>
+  <rect x="180" y="75" rx="12" ry="12" width="60" height="50" stroke="#f59e0b" stroke-width="2.5" fill="#f59e0b" opacity="0.12"/>
+  <rect x="230" y="75" rx="12" ry="12" width="60" height="50" stroke="#16a34a" stroke-width="2.5" fill="#16a34a" opacity="0.15"/>
+  <rect x="280" y="75" rx="12" ry="12" width="60" height="50" stroke="#16a34a" stroke-width="2.5" fill="#16a34a" opacity="0.1"/>
+  <!-- Checkmarks inside -->
+  <polyline points="100,97 108,107 125,90" stroke="#16a34a" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
+  <polyline points="150,97 158,107 175,90" stroke="#16a34a" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
+  <polyline points="200,97 208,107 225,90" stroke="#f59e0b" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+  <polyline points="250,97 258,107 275,90" stroke="#16a34a" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
+  <polyline points="300,97 308,107 325,90" stroke="#16a34a" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
+  <!-- Progress arrow -->
+  <line x1="100" y1="150" x2="320" y2="150" stroke="#16a34a" stroke-width="2" opacity="0.2" stroke-linecap="round"/>
+  <polyline points="310,144 320,150 310,156" stroke="#16a34a" stroke-width="2" fill="none" opacity="0.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Decorative -->
+  <circle cx="50" cy="40" r="12" fill="#f59e0b" opacity="0.08"/>
+  <circle cx="370" cy="45" r="16" fill="#16a34a" opacity="0.06"/>
+  <circle cx="55" cy="170" r="8" fill="#16a34a" opacity="0.08"/>
+</svg>

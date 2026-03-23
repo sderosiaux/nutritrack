@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" fill="none">
+  <!-- Head silhouette -->
+  <circle cx="200" cy="90" r="50" fill="#e5e7eb" opacity="0.4"/>
+  <!-- Calm wave inside -->
+  <path d="M165 90 Q175 75 185 90 Q195 105 205 90 Q215 75 225 90 Q235 105 245 90" stroke="#16a34a" stroke-width="2.5" fill="none" opacity="0.5" stroke-linecap="round"/>
+  <!-- Breathing circles (expanding) -->
+  <circle cx="200" cy="90" r="60" stroke="#16a34a" stroke-width="1" fill="none" opacity="0.15"/>
+  <circle cx="200" cy="90" r="72" stroke="#16a34a" stroke-width="0.8" fill="none" opacity="0.1"/>
+  <circle cx="200" cy="90" r="84" stroke="#16a34a" stroke-width="0.5" fill="none" opacity="0.06"/>
+  <!-- Tension marks (dissolving) -->
+  <line x1="100" y1="50" x2="110" y2="60" stroke="#f59e0b" stroke-width="2" opacity="0.3" stroke-linecap="round"/>
+  <line x1="105" y1="55" x2="95" y2="60" stroke="#f59e0b" stroke-width="2" opacity="0.25" stroke-linecap="round"/>
+  <line x1="300" y1="50" x2="290" y2="60" stroke="#f59e0b" stroke-width="2" opacity="0.3" stroke-linecap="round"/>
+  <line x1="295" y1="55" x2="305" y2="60" stroke="#f59e0b" stroke-width="2" opacity="0.25" stroke-linecap="round"/>
+  <!-- Grounding dots -->
+  <circle cx="170" cy="170" r="5" fill="#16a34a" opacity="0.15"/>
+  <circle cx="200" cy="175" r="5" fill="#16a34a" opacity="0.2"/>
+  <circle cx="230" cy="170" r="5" fill="#16a34a" opacity="0.15"/>
+  <!-- Decorative -->
+  <circle cx="50" cy="140" r="10" fill="#f59e0b" opacity="0.08"/>
+  <circle cx="360" cy="150" r="14" fill="#16a34a" opacity="0.06"/>
+</svg>

@@ -32,6 +32,7 @@ export function LogEntryModal({
   const [waterAmount, setWaterAmount] = useState(250);
   const [weightKg, setWeightKg] = useState("");
   const [submittingWater, setSubmittingWater] = useState(false);
+  const [submittingWeight, setSubmittingWeight] = useState(false);
   const queryClient = useQueryClient();
 
   async function handleWaterSubmit() {
@@ -54,6 +55,31 @@ export function LogEntryModal({
       toast.error("Failed to log water. Try again.");
     } finally {
       setSubmittingWater(false);
+    }
+  }
+
+  async function handleWeightSubmit() {
+    const kg = parseFloat(weightKg);
+    if (!kg || kg < 20 || kg > 300) return;
+    setSubmittingWeight(true);
+    try {
+      const res = await fetch(`/api/v1/logs/${date}/weight`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ weightKg: kg }),
+      });
+      if (!res.ok) {
+        toast.error("Failed to log weight");
+        return;
+      }
+      toast.success(`${kg} kg weight logged`);
+      queryClient.invalidateQueries({ queryKey: ["daily-log", date] });
+      queryClient.invalidateQueries({ queryKey: ["weight-entries"] });
+      onOpenChange(false);
+    } catch {
+      toast.error("Failed to log weight. Try again.");
+    } finally {
+      setSubmittingWeight(false);
     }
   }
 
@@ -203,23 +229,21 @@ export function LogEntryModal({
               <Input
                 id="weight-input"
                 type="number"
-                min={1}
+                min={20}
+                max={300}
                 step={0.1}
+                inputMode="decimal"
                 placeholder="e.g. 72.5"
                 value={weightKg}
                 onChange={(e) => setWeightKg(e.target.value)}
               />
             </div>
             <Button
-              disabled
-              style={{ opacity: 0.6 }}
-              title="Weight logging available in lane 7"
+              onClick={handleWeightSubmit}
+              disabled={submittingWeight || !weightKg || parseFloat(weightKg) < 20 || parseFloat(weightKg) > 300}
             >
-              Log Weight (coming soon)
+              {submittingWeight ? "Logging..." : "Log Weight"}
             </Button>
-            <p style={{ fontSize: 12, color: "var(--color-text-muted)" }}>
-              Weight tracking will be fully available in a future update.
-            </p>
           </div>
         )}
       </SheetContent>

@@ -14,6 +14,7 @@ type ContextVariables = {
 
 import {
   saveSubscription,
+  removeSubscription,
   sendDailyReminderNotification,
   type PushSubscriptionData,
 } from "@/server/services/push-service";
@@ -45,15 +46,29 @@ notificationsRouter.post("/subscribe", async (c) => {
   }
 
   const session = c.get("session");
-  const userId = session?.user?.id ?? "anonymous";
+  const userId = session?.user?.id;
+  if (!userId) {
+    return c.json({ error: "Authentication required" }, 401);
+  }
 
   const saved = await saveSubscription(userId, body.subscription);
   return c.json({ success: true, id: saved.id }, 201);
 });
 
 notificationsRouter.delete("/unsubscribe", async (c) => {
-  // Stub: in production, remove from DB
-  console.log("[notifications] Unsubscribe request received");
+  const body = await c.req.json<{ endpoint?: string }>().catch(() => null);
+
+  if (!body?.endpoint) {
+    return c.json({ error: "Missing endpoint" }, 422);
+  }
+
+  const session = c.get("session");
+  const userId = session?.user?.id;
+  if (!userId) {
+    return c.json({ error: "Authentication required" }, 401);
+  }
+
+  await removeSubscription(userId, body.endpoint);
   return c.json({ success: true });
 });
 

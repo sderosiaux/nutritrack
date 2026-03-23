@@ -211,20 +211,38 @@ export default function LessonDetailPage() {
         <ArrowLeft size={16} /> Back
       </Link>
 
-      {/* Cover illustration placeholder */}
-      <div
-        style={{
-          height: 200,
-          borderRadius: "var(--radius-lg)",
-          background: `linear-gradient(135deg, color-mix(in srgb, ${categoryColor} 15%, var(--color-surface-alt)), var(--color-surface-alt))`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          marginBottom: 32,
-        }}
-      >
-        <BookOpen size={48} style={{ color: categoryColor, opacity: 0.4 }} />
-      </div>
+      {/* Cover illustration */}
+      {lesson.illustrationUrl ? (
+        <div
+          style={{
+            height: 200,
+            borderRadius: "var(--radius-lg)",
+            overflow: "hidden",
+            marginBottom: 32,
+            background: `linear-gradient(135deg, color-mix(in srgb, ${categoryColor} 15%, var(--color-surface-alt)), var(--color-surface-alt))`,
+          }}
+        >
+          <img
+            src={lesson.illustrationUrl}
+            alt=""
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+          />
+        </div>
+      ) : (
+        <div
+          style={{
+            height: 200,
+            borderRadius: "var(--radius-lg)",
+            background: `linear-gradient(135deg, color-mix(in srgb, ${categoryColor} 15%, var(--color-surface-alt)), var(--color-surface-alt))`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: 32,
+          }}
+        >
+          <BookOpen size={48} style={{ color: categoryColor, opacity: 0.4 }} />
+        </div>
+      )}
 
       {/* Meta */}
       <div

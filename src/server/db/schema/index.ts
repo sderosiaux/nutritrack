@@ -13,6 +13,7 @@ export {
   unitsEnum,
   userProfiles,
   dailyTargets,
+  pushSubscriptions,
 } from "./users";
 
 // Food database

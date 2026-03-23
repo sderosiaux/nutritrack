@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" fill="none">
+  <!-- Lotus / meditation figure (abstract) -->
+  <!-- Center circle (head) -->
+  <circle cx="200" cy="65" r="16" fill="#16a34a" opacity="0.25"/>
+  <!-- Body triangle -->
+  <path d="M200 80 L170 140 L230 140 Z" fill="#16a34a" opacity="0.12"/>
+  <!-- Lotus petals -->
+  <ellipse cx="160" cy="135" rx="25" ry="12" fill="#16a34a" opacity="0.15" transform="rotate(-20 160 135)"/>
+  <ellipse cx="240" cy="135" rx="25" ry="12" fill="#16a34a" opacity="0.15" transform="rotate(20 240 135)"/>
+  <ellipse cx="200" cy="145" rx="30" ry="10" fill="#16a34a" opacity="0.1"/>
+  <!-- Aura rings -->
+  <circle cx="200" cy="95" r="55" stroke="#f59e0b" stroke-width="1" fill="none" opacity="0.15"/>
+  <circle cx="200" cy="95" r="70" stroke="#f59e0b" stroke-width="0.8" fill="none" opacity="0.1"/>
+  <circle cx="200" cy="95" r="85" stroke="#f59e0b" stroke-width="0.5" fill="none" opacity="0.06"/>
+  <!-- Floating dots (mindfulness particles) -->
+  <circle cx="120" cy="50" r="3" fill="#f59e0b" opacity="0.25"/>
+  <circle cx="280" cy="55" r="2.5" fill="#f59e0b" opacity="0.2"/>
+  <circle cx="100" cy="100" r="2" fill="#16a34a" opacity="0.2"/>
+  <circle cx="300" cy="90" r="2.5" fill="#16a34a" opacity="0.18"/>
+  <circle cx="140" cy="170" r="3" fill="#f59e0b" opacity="0.12"/>
+  <circle cx="260" cy="175" r="2.5" fill="#16a34a" opacity="0.1"/>
+  <!-- Decorative -->
+  <circle cx="50" cy="30" r="12" fill="#16a34a" opacity="0.06"/>
+  <circle cx="360" cy="165" r="10" fill="#f59e0b" opacity="0.08"/>
+</svg>

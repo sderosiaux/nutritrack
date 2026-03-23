@@ -93,6 +93,7 @@ export async function seedLessonsData(db: InsertableDb): Promise<void> {
     readTimeMin: l.readTimeMin,
     order: l.order,
     publishedAt: l.publishedAt,
+    illustrationUrl: l.illustrationUrl ?? `/illustrations/${l.category}.svg`,
   }));
   for (const batch of chunk(rows, CHUNK)) {
     await db.insert(lessons).values(batch).onConflictDoNothing();

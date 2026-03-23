@@ -79,25 +79,47 @@ function LessonCard({ lesson }: { lesson: LessonSummary }) {
         }}
         className="hover:shadow-md hover:-translate-y-0.5"
       >
-        {/* Thumbnail placeholder */}
-        <div
-          style={{
-            height: "120px",
-            background: `linear-gradient(135deg, color-mix(in srgb, ${CATEGORY_COLORS[lesson.category] ?? "var(--color-primary)"} 15%, var(--color-surface-alt)), var(--color-surface-alt))`,
-            borderRadius: "var(--radius-xl) var(--radius-xl) 0 0",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <BookOpen
-            size={32}
+        {/* Thumbnail */}
+        {lesson.illustrationUrl ? (
+          <div
             style={{
-              color: CATEGORY_COLORS[lesson.category] ?? "var(--color-primary)",
-              opacity: 0.6,
+              height: "120px",
+              borderRadius: "var(--radius-xl) var(--radius-xl) 0 0",
+              overflow: "hidden",
+              background: `linear-gradient(135deg, color-mix(in srgb, ${CATEGORY_COLORS[lesson.category] ?? "var(--color-primary)"} 15%, var(--color-surface-alt)), var(--color-surface-alt))`,
             }}
-          />
-        </div>
+          >
+            <img
+              src={lesson.illustrationUrl}
+              alt=""
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
+            />
+          </div>
+        ) : (
+          <div
+            style={{
+              height: "120px",
+              background: `linear-gradient(135deg, color-mix(in srgb, ${CATEGORY_COLORS[lesson.category] ?? "var(--color-primary)"} 15%, var(--color-surface-alt)), var(--color-surface-alt))`,
+              borderRadius: "var(--radius-xl) var(--radius-xl) 0 0",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <BookOpen
+              size={32}
+              style={{
+                color: CATEGORY_COLORS[lesson.category] ?? "var(--color-primary)",
+                opacity: 0.6,
+              }}
+            />
+          </div>
+        )}
 
         <CardHeader style={{ paddingBottom: 8 }}>
           <div style={{ marginBottom: 6 }}>

@@ -10,6 +10,7 @@ import {
   integer,
   pgEnum,
   uniqueIndex,
+  index,
 } from "drizzle-orm/pg-core";
 import { user } from "./auth";
 
@@ -92,5 +93,23 @@ export const dailyTargets = pgTable(
   },
   (t) => [
     uniqueIndex("daily_targets_user_date_idx").on(t.userId, t.date),
+  ]
+);
+
+export const pushSubscriptions = pgTable(
+  "push_subscriptions",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    endpoint: text("endpoint").notNull(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("push_subscriptions_user_endpoint_idx").on(t.userId, t.endpoint),
+    index("push_subscriptions_user_idx").on(t.userId),
   ]
 );

@@ -14,6 +14,7 @@ export interface SeedLesson {
   readTimeMin: number;
   order: number;
   publishedAt: string;
+  illustrationUrl?: string;
 }
 
 export const seedLessons: SeedLesson[] = [

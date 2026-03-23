@@ -1,14 +1,15 @@
 /**
  * email-jobs — Job definitions and processors for email notifications.
  *
- * nodemailer is NOT installed. Email sends fall back to console logging.
- * BullMQ is NOT installed. Uses an in-memory queue stub.
+ * Uses nodemailer for real SMTP delivery when configured via env vars:
+ *   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM
  *
- * When real packages are available:
- *   - Replace jobQueue with BullMQ Queue
- *   - Replace transporter stub with nodemailer.createTransport(...)
+ * Falls back to console logging when SMTP is not configured.
+ * Uses an in-memory queue (no BullMQ) suitable for single-instance deployment.
  */
 
+import nodemailer from "nodemailer";
+import type { Transporter } from "nodemailer";
 import { buildDailyReminderEmail, buildWeeklySummaryEmail } from "./email-templates";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -49,33 +50,46 @@ export interface JobResult {
   error?: string;
 }
 
-// ── Email transporter (stub — nodemailer not installed) ───────────────────────
+// ── SMTP configuration ───────────────────────────────────────────────────────
 
-let nodemailerTransport: {
-  sendMail: (opts: {
-    from: string;
-    to: string;
-    subject: string;
-    html: string;
-  }) => Promise<{ messageId: string }>;
-} | null = null;
+let smtpWarned = false;
+let transporter: Transporter | null = null;
 
-try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const nodemailer = require("nodemailer");
-  nodemailerTransport = nodemailer.createTransport({
-    host: process.env.SMTP_HOST ?? "localhost",
+function isSmtpConfigured(): boolean {
+  return !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+}
+
+function getTransporter(): Transporter | null {
+  if (transporter) return transporter;
+
+  if (!isSmtpConfigured()) {
+    if (!smtpWarned) {
+      console.warn("[email-jobs] SMTP not configured (missing SMTP_HOST/SMTP_USER/SMTP_PASS). Emails will be logged to console.");
+      smtpWarned = true;
+    }
+    smtpConfigured = false;
+    return null;
+  }
+
+  transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT ?? 587),
+    secure: Number(process.env.SMTP_PORT ?? 587) === 465,
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
   });
-} catch {
-  // nodemailer not installed — stub mode
+
+  smtpConfigured = true;
+  return transporter;
 }
 
-// ── In-memory job queue (BullMQ stub) ─────────────────────────────────────────
+function getFromAddress(): string {
+  return process.env.SMTP_FROM ?? "noreply@nutritrack.local";
+}
+
+// ── In-memory job queue ───────────────────────────────────────────────────────
 
 class InMemoryJobQueue {
   private queue: EmailJob[] = [];
@@ -125,15 +139,16 @@ export async function processDailyReminder(data: DailyReminderData): Promise<Job
 
   const html = buildDailyReminderEmail(stats);
   const subject = `NutriTrack — Your daily summary for ${stats.date}`;
+  const transport = getTransporter();
 
-  if (!nodemailerTransport) {
-    console.log(`[email-jobs] STUB daily-reminder → ${data.email}: ${subject}`);
+  if (!transport) {
+    console.log(`[email-jobs] STUB daily-reminder -> ${data.email}: ${subject}`);
     return { success: true, messageId: `stub-${Date.now()}` };
   }
 
   try {
-    const result = await nodemailerTransport.sendMail({
-      from: process.env.SMTP_FROM ?? "noreply@nutritrack.local",
+    const result = await transport.sendMail({
+      from: getFromAddress(),
       to: data.email,
       subject,
       html,
@@ -157,15 +172,16 @@ export async function processWeeklySummary(data: WeeklySummaryData): Promise<Job
 
   const html = buildWeeklySummaryEmail(weekStats);
   const subject = `NutriTrack — Your weekly summary`;
+  const transport = getTransporter();
 
-  if (!nodemailerTransport) {
-    console.log(`[email-jobs] STUB weekly-summary → ${data.email}: ${subject}`);
+  if (!transport) {
+    console.log(`[email-jobs] STUB weekly-summary -> ${data.email}: ${subject}`);
     return { success: true, messageId: `stub-${Date.now()}` };
   }
 
   try {
-    const result = await nodemailerTransport.sendMail({
-      from: process.env.SMTP_FROM ?? "noreply@nutritrack.local",
+    const result = await transport.sendMail({
+      from: getFromAddress(),
       to: data.email,
       subject,
       html,
@@ -177,6 +193,34 @@ export async function processWeeklySummary(data: WeeklySummaryData): Promise<Job
     return { success: false, error: message };
   }
 }
+
+// ── Queue processor ───────────────────────────────────────────────────────────
+
+/** Drains the queue and processes all pending email jobs. Returns results for each job. */
+export async function processQueue(): Promise<JobResult[]> {
+  const results: JobResult[] = [];
+
+  let job = jobQueue.dequeue();
+  while (job) {
+    let result: JobResult;
+    switch (job.type) {
+      case "daily-reminder":
+        result = await processDailyReminder(job.data as DailyReminderData);
+        break;
+      case "weekly-summary":
+        result = await processWeeklySummary(job.data as WeeklySummaryData);
+        break;
+      default:
+        result = { success: false, error: `Unknown job type: ${(job as EmailJob).type}` };
+    }
+    results.push(result);
+    job = jobQueue.dequeue();
+  }
+
+  return results;
+}
+
+// ── Scheduler functions ───────────────────────────────────────────────────────
 
 /** Schedules a daily reminder for a user (adds to in-memory queue). */
 export function scheduleDailyReminder(data: DailyReminderData): void {

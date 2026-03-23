@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" fill="none">
+  <!-- Moon -->
+  <circle cx="160" cy="80" r="40" fill="#f59e0b" opacity="0.25"/>
+  <circle cx="175" cy="70" r="35" fill="#f8fafc"/>
+  <!-- Stars -->
+  <circle cx="250" cy="50" r="3" fill="#f59e0b" opacity="0.6"/>
+  <circle cx="280" cy="70" r="2" fill="#f59e0b" opacity="0.4"/>
+  <circle cx="310" cy="40" r="2.5" fill="#f59e0b" opacity="0.5"/>
+  <circle cx="220" cy="35" r="1.5" fill="#f59e0b" opacity="0.35"/>
+  <circle cx="340" cy="60" r="2" fill="#f59e0b" opacity="0.3"/>
+  <!-- Zzz -->
+  <text x="260" y="110" font-family="system-ui,sans-serif" font-size="28" font-weight="700" fill="#16a34a" opacity="0.4">Z</text>
+  <text x="290" y="90" font-family="system-ui,sans-serif" font-size="22" font-weight="700" fill="#16a34a" opacity="0.3">Z</text>
+  <text x="312" y="75" font-family="system-ui,sans-serif" font-size="16" font-weight="700" fill="#16a34a" opacity="0.2">Z</text>
+  <!-- Pillow / bed shape -->
+  <rect x="100" y="140" rx="20" ry="20" width="200" height="30" fill="#16a34a" opacity="0.12"/>
+  <rect x="120" y="130" rx="14" ry="14" width="80" height="20" fill="#16a34a" opacity="0.18"/>
+  <!-- Decorative circles -->
+  <circle cx="60" cy="50" r="16" fill="#16a34a" opacity="0.06"/>
+  <circle cx="350" cy="160" r="12" fill="#f59e0b" opacity="0.08"/>
+</svg>

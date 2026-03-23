@@ -1,10 +1,14 @@
 /**
- * push-service — Web Push notification sender.
+ * push-service — Web Push notification sender with DB persistence.
  *
- * web-push package is NOT installed. This module provides stub implementations
- * that log to console. Real implementation: install web-push and configure
- * VAPID keys via VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY env vars.
+ * Requires VAPID_PUBLIC_KEY + VAPID_PRIVATE_KEY env vars for sending.
+ * Without them, send operations are silently skipped.
+ * Subscription CRUD always persists to the push_subscriptions table.
  */
+
+import { db, pushSubscriptions } from "@/server/db";
+import { eq, and } from "drizzle-orm";
+import { randomUUID } from "crypto";
 
 export interface PushSubscriptionData {
   endpoint: string;
@@ -33,64 +37,117 @@ export interface SavedSubscription {
   createdAt: Date;
 }
 
-// ── Stub implementation (web-push not installed) ──────────────────────────────
+// ── VAPID / web-push setup ─────────────────────────────────────────────────
 
-let webPush: {
+type WebPushModule = {
   setVapidDetails: (subject: string, pub: string, priv: string) => void;
   sendNotification: (sub: PushSubscriptionData, payload: string) => Promise<{ statusCode: number }>;
-} | null = null;
+};
 
-// Attempt to load web-push if available AND VAPID keys are configured
+let webPush: WebPushModule | null = null;
+
 const vapidPublic = process.env.VAPID_PUBLIC_KEY ?? "";
 const vapidPrivate = process.env.VAPID_PRIVATE_KEY ?? "";
 const vapidSubject = process.env.VAPID_SUBJECT ?? "mailto:admin@nutritrack.local";
 
-if (vapidPublic && vapidPrivate) {
+const webPushReady: Promise<void> = (async () => {
+  if (!vapidPublic || !vapidPrivate) return;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    webPush = require(/* webpackIgnore: true */ "web-push");
-    if (webPush) {
-      webPush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
-    }
+    const mod = await import("web-push");
+    webPush = mod.default ?? mod;
+    webPush!.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
   } catch {
-    // web-push not installed — use stub mode
+    // web-push not available — send operations will be skipped
   }
-}
+})();
+
+// ── Subscription CRUD ──────────────────────────────────────────────────────
 
 /**
- * Saves a push subscription for a user.
- * Returns a stub saved subscription (no DB in stub mode).
+ * Saves (upserts) a push subscription for a user.
+ * On conflict (same user + endpoint), updates the keys.
  */
 export async function saveSubscription(
   userId: string,
   subscription: PushSubscriptionData
 ): Promise<SavedSubscription> {
-  // Stub: in production, save to DB
-  console.log(`[push-service] Saving subscription for user ${userId}: ${subscription.endpoint}`);
+  const id = randomUUID();
+
+  const result = await db
+    .insert(pushSubscriptions)
+    .values({
+      id,
+      userId,
+      endpoint: subscription.endpoint,
+      p256dh: subscription.keys.p256dh,
+      auth: subscription.keys.auth,
+    })
+    .onConflictDoUpdate({
+      target: [pushSubscriptions.userId, pushSubscriptions.endpoint],
+      set: {
+        p256dh: subscription.keys.p256dh,
+        auth: subscription.keys.auth,
+      },
+    })
+    .returning();
 
   return {
-    id: `sub-${Date.now()}`,
-    userId,
-    endpoint: subscription.endpoint,
-    createdAt: new Date(),
+    id: result[0].id,
+    userId: result[0].userId,
+    endpoint: result[0].endpoint,
+    createdAt: result[0].createdAt,
   };
 }
 
 /**
+ * Removes a push subscription by userId + endpoint.
+ */
+export async function removeSubscription(
+  userId: string,
+  endpoint: string
+): Promise<void> {
+  await db
+    .delete(pushSubscriptions)
+    .where(
+      and(
+        eq(pushSubscriptions.userId, userId),
+        eq(pushSubscriptions.endpoint, endpoint)
+      )
+    );
+}
+
+/**
+ * Returns all push subscriptions for a user.
+ */
+export async function getSubscriptions(
+  userId: string
+): Promise<SavedSubscription[]> {
+  const rows = await db
+    .select()
+    .from(pushSubscriptions)
+    .where(eq(pushSubscriptions.userId, userId));
+
+  return rows.map((r) => ({
+    id: r.id,
+    userId: r.userId,
+    endpoint: r.endpoint,
+    createdAt: r.createdAt,
+  }));
+}
+
+// ── Push sending ───────────────────────────────────────────────────────────
+
+/**
  * Sends a Web Push notification to a subscription endpoint.
- * Falls back to console logging if web-push is not available.
+ * Returns { success: false } silently when VAPID keys are not configured.
  */
 export async function sendPushNotification(
   subscription: PushSubscriptionData,
   payload: PushPayload
 ): Promise<PushResult> {
+  await webPushReady;
   if (!webPush) {
-    // Stub mode: log to console
-    console.log(
-      `[push-service stub] Would send notification to ${subscription.endpoint}:`,
-      JSON.stringify(payload)
-    );
-    return { success: true };
+    return { success: false };
   }
 
   try {
