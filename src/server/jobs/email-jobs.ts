@@ -67,7 +67,6 @@ function getTransporter(): Transporter | null {
       console.warn("[email-jobs] SMTP not configured (missing SMTP_HOST/SMTP_USER/SMTP_PASS). Emails will be logged to console.");
       smtpWarned = true;
     }
-    smtpConfigured = false;
     return null;
   }
 
@@ -81,7 +80,6 @@ function getTransporter(): Transporter | null {
     },
   });
 
-  smtpConfigured = true;
   return transporter;
 }
 

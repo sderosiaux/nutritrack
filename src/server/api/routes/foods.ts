@@ -29,7 +29,8 @@ router.get("/search", async (c) => {
 });
 
 router.get("/recent", async (c) => {
-  const userId = c.get("session")!.user.id;
+  const userId = c.get("session")?.user.id;
+  if (!userId) return c.json([]);
   const foods = await foodService.getRecentFoods(userId, 20);
   return c.json(foods);
 });

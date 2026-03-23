@@ -1,7 +1,7 @@
 # ── Stage 1: deps ───────────────────────────────────────────────────────────
 FROM node:22-alpine AS deps
 
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat unzip
 RUN npm install -g pnpm
 
 WORKDIR /app

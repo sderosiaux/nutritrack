@@ -720,18 +720,17 @@ async function main() {
       await importUsda(sql, limitArg);
     }
 
-    // Rebuild indexes + update statistics
-    await rebuildSearchIndexes(sql);
-    console.log("Running ANALYZE...");
-    await sql`ANALYZE foods`;
-    await sql`ANALYZE serving_sizes`;
-
     const [countRow] = await sql`SELECT count(*) as count FROM foods`;
     const total = Number(countRow?.count ?? 0);
 
     console.log(`\nSync complete in ${elapsed(totalStart)}`);
     console.log(`Total foods in database: ${total.toLocaleString()}`);
   } finally {
+    // Always rebuild indexes, even on failure
+    await rebuildSearchIndexes(sql).catch(e => console.error("Failed to rebuild indexes:", e));
+    console.log("Running ANALYZE...");
+    await sql`ANALYZE foods`.catch(() => { /* best effort */ });
+    await sql`ANALYZE serving_sizes`.catch(() => { /* best effort */ });
     await sql.end();
   }
 }
