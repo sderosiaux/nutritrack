@@ -147,35 +147,40 @@ export async function searchFoods(params: {
       )`;
 
   const rows = await db
-    .select({ food: foods, total: sql<number>`count(*) OVER()` })
+    .select()
     .from(foods)
     .where(searchCond)
     .orderBy(sql`${rankExpr} DESC`)
     .limit(limit)
     .offset(offset);
 
-  const total = rows.length > 0 ? Number(rows[0].total) : 0;
-  const foodRows = rows.map(r => r.food);
-  const ssMap = await loadServingSizes(foodRows.map((r) => r.id));
+  const countRow = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(foods)
+    .where(searchCond);
+
+  const total = Number(countRow[0]?.count ?? 0);
+  const ssMap = await loadServingSizes(rows.map((r) => r.id));
 
   // Get user's recently logged food IDs for ranking boost
   let recentIds = new Set<string>();
   if (userId) {
     const recentEntries = await db
-      .selectDistinct({ foodId: mealEntries.foodId })
+      .select({ foodId: mealEntries.foodId })
       .from(mealEntries)
       .where(and(
         eq(mealEntries.userId, userId),
         isNotNull(mealEntries.foodId)
       ))
-      .orderBy(desc(mealEntries.loggedAt))
+      .groupBy(mealEntries.foodId)
+      .orderBy(sql`max(${mealEntries.loggedAt}) DESC`)
       .limit(20);
     recentIds = new Set(
       recentEntries.map(e => e.foodId).filter((id): id is string => id !== null)
     );
   }
 
-  const items = foodRows.map((r) => rowToSearchItem(r, ssMap.get(r.id) ?? []));
+  const items = rows.map((r) => rowToSearchItem(r, ssMap.get(r.id) ?? []));
   const ranked = rankSearchResults(items, q, recentIds);
 
   return { items: ranked, total };
@@ -203,13 +208,14 @@ export async function getFoodById(id: string): Promise<(FoodSearchItem & { micro
 export async function getRecentFoods(userId: string, limit: number): Promise<FoodSearchItem[]> {
   // Query meal_entries for user's recently logged food IDs (distinct, most recent first)
   const recentEntries = await db
-    .selectDistinct({ foodId: mealEntries.foodId })
+    .select({ foodId: mealEntries.foodId })
     .from(mealEntries)
     .where(and(
       eq(mealEntries.userId, userId),
       isNotNull(mealEntries.foodId)
     ))
-    .orderBy(desc(mealEntries.loggedAt))
+    .groupBy(mealEntries.foodId)
+    .orderBy(sql`max(${mealEntries.loggedAt}) DESC`)
     .limit(limit);
 
   const foodIds = recentEntries

@@ -1,14 +1,13 @@
 /**
  * CHK-009: searchFoods service — behavior-precise tests.
  * Calls the REAL searchFoods function. Only @/server/db is mocked (no connection attempts).
- * Verifies: FTS path exercised, nameTranslations JSONB match path, pagination, userId-scoped recent-ranking.
+ * Verifies: FTS path exercised, pagination, userId-scoped recent-ranking.
  * Source: spec/07-api.md §Food Database
  */
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ── DB mock ────────────────────────────────────────────────────────────────
-// Module-level vi.mock — hoisted before imports. Static import of real service below.
 vi.mock("@/server/db", () => {
   const db = {
     select: vi.fn(),
@@ -32,7 +31,6 @@ vi.mock("@/server/db", () => {
   return { db, foods, servingSizes, mealEntries, foodFavorites };
 });
 
-// Static imports — resolved after vi.mock() hoisting
 import { db } from "@/server/db";
 import { searchFoods } from "@/server/services/food-service";
 
@@ -70,33 +68,35 @@ const BASE_FOOD_2 = {
 
 const SERVING_SIZE = { id: "ss-1", foodId: "food-1", label: "100g", weightG: "100" };
 
-// ── Tests ──────────────────────────────────────────────────────────────────
+// Pattern: searchFoods does 3 db.select() calls:
+// 1. rows query (foods)
+// 2. count query
+// 3. serving sizes query
+// + optionally a 4th for recent food IDs when userId is provided
 
 describe("CHK-009: searchFoods service — real function, DB-only mock", () => {
   beforeEach(() => {
-    vi.resetAllMocks(); // resetAllMocks clears mockReturnValueOnce queues, preventing cross-test leaks
+    vi.resetAllMocks();
   });
 
-  it("calls db.select() to query foods (FTS path exercised, not service mock)", async () => {
+  it("calls db.select() to query foods (FTS path exercised)", async () => {
     vi.mocked(db.select)
-      .mockReturnValueOnce(makeChain([{ food: BASE_FOOD, total: 1 }]) as never)
-      .mockReturnValueOnce(makeChain([SERVING_SIZE]) as never);
+      .mockReturnValueOnce(makeChain([BASE_FOOD]) as never)       // rows
+      .mockReturnValueOnce(makeChain([{ count: 1 }]) as never)    // count
+      .mockReturnValueOnce(makeChain([SERVING_SIZE]) as never);   // servings
 
     const result = await searchFoods({ q: "chicken breast", limit: 20, offset: 0 });
 
-    // Real service was called — db.select used, not a mock passthrough
     expect(db.select).toHaveBeenCalled();
     expect(result.items).toHaveLength(1);
     expect(result.items[0].id).toBe("food-1");
     expect(result.total).toBe(1);
   });
 
-  it("returns total count from window function in same query (pagination metadata)", async () => {
+  it("returns total count from separate count query (pagination metadata)", async () => {
     vi.mocked(db.select)
-      .mockReturnValueOnce(makeChain([
-        { food: BASE_FOOD, total: 42 },
-        { food: BASE_FOOD_2, total: 42 },
-      ]) as never)
+      .mockReturnValueOnce(makeChain([BASE_FOOD, BASE_FOOD_2]) as never)
+      .mockReturnValueOnce(makeChain([{ count: 42 }]) as never)
       .mockReturnValueOnce(makeChain([]) as never);
 
     const result = await searchFoods({ q: "chicken", limit: 2, offset: 0 });
@@ -105,44 +105,40 @@ describe("CHK-009: searchFoods service — real function, DB-only mock", () => {
     expect(result.items).toHaveLength(2);
   });
 
-  it("calls db.selectDistinct for meal_entries when userId is provided (recent-ranking path)", async () => {
+  it("fetches recent food IDs when userId is provided (recent-ranking path)", async () => {
     vi.mocked(db.select)
-      .mockReturnValueOnce(makeChain([{ food: BASE_FOOD, total: 1 }]) as never)
-      .mockReturnValueOnce(makeChain([]) as never);
-
-    vi.mocked(db.selectDistinct).mockReturnValueOnce(
-      makeChain([{ foodId: "food-1" }]) as never
-    );
+      .mockReturnValueOnce(makeChain([BASE_FOOD]) as never)       // rows
+      .mockReturnValueOnce(makeChain([{ count: 1 }]) as never)    // count
+      .mockReturnValueOnce(makeChain([]) as never)                // servings
+      .mockReturnValueOnce(makeChain([{ foodId: "food-1" }]) as never); // recent
 
     await searchFoods({ q: "chicken", limit: 20, offset: 0, userId: "user-1" });
 
-    expect(db.selectDistinct).toHaveBeenCalled();
+    // 4th select call is the recent foods groupBy query
+    expect(db.select).toHaveBeenCalledTimes(4);
   });
 
-  it("does NOT call db.selectDistinct when no userId (anonymous search)", async () => {
+  it("does NOT fetch recent food IDs when no userId (anonymous search)", async () => {
     vi.mocked(db.select)
-      .mockReturnValueOnce(makeChain([{ food: BASE_FOOD, total: 1 }]) as never)
+      .mockReturnValueOnce(makeChain([BASE_FOOD]) as never)
+      .mockReturnValueOnce(makeChain([{ count: 1 }]) as never)
       .mockReturnValueOnce(makeChain([]) as never);
 
     await searchFoods({ q: "chicken", limit: 20, offset: 0 });
 
-    expect(db.selectDistinct).not.toHaveBeenCalled();
+    // Only 3 calls: rows + count + servings (no recent)
+    expect(db.select).toHaveBeenCalledTimes(3);
   });
 
-  it("recent food (in userId meal_entries) ranks above verified non-recent food", async () => {
+  it("recent food ranks above verified non-recent food", async () => {
     const recentFood = { ...BASE_FOOD_2, id: "food-2" };
     const verifiedFood = { ...BASE_FOOD, id: "food-1" };
 
     vi.mocked(db.select)
-      .mockReturnValueOnce(makeChain([
-        { food: verifiedFood, total: 2 },
-        { food: recentFood, total: 2 },
-      ]) as never)
-      .mockReturnValueOnce(makeChain([]) as never);
-
-    vi.mocked(db.selectDistinct).mockReturnValueOnce(
-      makeChain([{ foodId: "food-2" }]) as never
-    );
+      .mockReturnValueOnce(makeChain([verifiedFood, recentFood]) as never)
+      .mockReturnValueOnce(makeChain([{ count: 2 }]) as never)
+      .mockReturnValueOnce(makeChain([]) as never)
+      .mockReturnValueOnce(makeChain([{ foodId: "food-2" }]) as never);
 
     const result = await searchFoods({ q: "chicken", limit: 20, offset: 0, userId: "user-1" });
 
@@ -151,7 +147,8 @@ describe("CHK-009: searchFoods service — real function, DB-only mock", () => {
 
   it("returns empty items and zero total when no foods match", async () => {
     vi.mocked(db.select)
-      .mockReturnValueOnce(makeChain([]) as never);
+      .mockReturnValueOnce(makeChain([]) as never)
+      .mockReturnValueOnce(makeChain([{ count: 0 }]) as never);
 
     const result = await searchFoods({ q: "xyznomatch", limit: 20, offset: 0 });
 
@@ -167,7 +164,8 @@ describe("CHK-009: searchFoods service — real function, DB-only mock", () => {
     };
 
     vi.mocked(db.select)
-      .mockReturnValueOnce(makeChain([{ food: frenchFood, total: 1 }]) as never)
+      .mockReturnValueOnce(makeChain([frenchFood]) as never)
+      .mockReturnValueOnce(makeChain([{ count: 1 }]) as never)
       .mockReturnValueOnce(makeChain([]) as never);
 
     const result = await searchFoods({ q: "blanc de poulet", limit: 20, offset: 0 });
@@ -176,12 +174,13 @@ describe("CHK-009: searchFoods service — real function, DB-only mock", () => {
     expect(result.items[0].id).toBe("food-fr");
   });
 
-  it("pagination: db.select is called with limit and offset applied (not client-side slice)", async () => {
+  it("pagination: db.select is called with limit and offset applied", async () => {
     vi.mocked(db.select)
       .mockReturnValueOnce(makeChain([
-        { food: { ...BASE_FOOD, id: "food-21" }, total: 50 },
-        { food: { ...BASE_FOOD, id: "food-22" }, total: 50 },
+        { ...BASE_FOOD, id: "food-21" },
+        { ...BASE_FOOD, id: "food-22" },
       ]) as never)
+      .mockReturnValueOnce(makeChain([{ count: 50 }]) as never)
       .mockReturnValueOnce(makeChain([]) as never);
 
     const result = await searchFoods({ q: "chicken", limit: 2, offset: 20 });
@@ -193,7 +192,8 @@ describe("CHK-009: searchFoods service — real function, DB-only mock", () => {
 
   it("serving sizes are attached to returned food items", async () => {
     vi.mocked(db.select)
-      .mockReturnValueOnce(makeChain([{ food: BASE_FOOD, total: 1 }]) as never)
+      .mockReturnValueOnce(makeChain([BASE_FOOD]) as never)
+      .mockReturnValueOnce(makeChain([{ count: 1 }]) as never)
       .mockReturnValueOnce(makeChain([SERVING_SIZE]) as never);
 
     const result = await searchFoods({ q: "chicken", limit: 20, offset: 0 });
@@ -206,9 +206,10 @@ describe("CHK-009: searchFoods service — real function, DB-only mock", () => {
   // ── SQL-path precision tests ──────────────────────────────────────────────
 
   it("multi-word query uses stored search_vector with websearch_to_tsquery in .where()", async () => {
-    const chain1 = makeChain([{ food: BASE_FOOD, total: 1 }]);
+    const chain1 = makeChain([BASE_FOOD]);
     vi.mocked(db.select)
       .mockReturnValueOnce(chain1 as never)
+      .mockReturnValueOnce(makeChain([{ count: 1 }]) as never)
       .mockReturnValueOnce(makeChain([SERVING_SIZE]) as never);
 
     await searchFoods({ q: "chicken breast", limit: 20, offset: 0 });
@@ -222,9 +223,10 @@ describe("CHK-009: searchFoods service — real function, DB-only mock", () => {
   });
 
   it("single-word query includes trigram % operator in .where()", async () => {
-    const chain1 = makeChain([{ food: BASE_FOOD, total: 1 }]);
+    const chain1 = makeChain([BASE_FOOD]);
     vi.mocked(db.select)
       .mockReturnValueOnce(chain1 as never)
+      .mockReturnValueOnce(makeChain([{ count: 1 }]) as never)
       .mockReturnValueOnce(makeChain([SERVING_SIZE]) as never);
 
     await searchFoods({ q: "chicken", limit: 20, offset: 0 });
@@ -235,9 +237,10 @@ describe("CHK-009: searchFoods service — real function, DB-only mock", () => {
   });
 
   it("single-word query also includes search_vector FTS in .where()", async () => {
-    const chain1 = makeChain([{ food: BASE_FOOD, total: 1 }]);
+    const chain1 = makeChain([BASE_FOOD]);
     vi.mocked(db.select)
       .mockReturnValueOnce(chain1 as never)
+      .mockReturnValueOnce(makeChain([{ count: 1 }]) as never)
       .mockReturnValueOnce(makeChain([SERVING_SIZE]) as never);
 
     await searchFoods({ q: "poulet", limit: 20, offset: 0 });

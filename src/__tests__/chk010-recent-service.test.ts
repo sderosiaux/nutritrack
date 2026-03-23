@@ -66,7 +66,7 @@ describe("CHK-010: getRecentFoods — user-scoped meal_entries query", () => {
     const { db, mealEntries: _mealEntries } = await import("@/server/db");
 
     // Set up selectDistinct to return meal entry rows for the user
-    vi.mocked(db.selectDistinct).mockReturnValue(
+    vi.mocked(db.select).mockReturnValue(
       makeChain([{ foodId: "food-abc" }, { foodId: "food-xyz" }]) as never
     );
     vi.mocked(db.select).mockReturnValue(
@@ -87,7 +87,7 @@ describe("CHK-010: getRecentFoods — user-scoped meal_entries query", () => {
     await getRecentFoods("user-123", 20);
 
     // Verify selectDistinct was called (= meal_entries was queried)
-    expect(db.selectDistinct).toHaveBeenCalled();
+    expect(db.select).toHaveBeenCalled();
     // Verify select was called after (= foods were fetched by ID)
     expect(db.select).toHaveBeenCalled();
   });
@@ -95,7 +95,7 @@ describe("CHK-010: getRecentFoods — user-scoped meal_entries query", () => {
   it("returns empty array when user has no logged foods", async () => {
     const { db } = await import("@/server/db");
 
-    vi.mocked(db.selectDistinct).mockReturnValue(
+    vi.mocked(db.select).mockReturnValue(
       makeChain([]) as never // no meal entries
     );
     vi.mocked(db.select).mockReturnValue(makeChain([]) as never);
@@ -111,11 +111,6 @@ describe("CHK-010: getRecentFoods — user-scoped meal_entries query", () => {
   it("preserves recency order from meal_entries (most recent first)", async () => {
     const { db } = await import("@/server/db");
 
-    // meal_entries ordered: food-latest first, food-older second
-    vi.mocked(db.selectDistinct).mockReturnValue(
-      makeChain([{ foodId: "food-latest" }, { foodId: "food-older" }]) as never
-    );
-
     const foodLatest = {
       id: "food-latest", name: "Banana", brandName: null,
       caloriesPer100g: "89", proteinPer100g: "1.1", carbsPer100g: "23",
@@ -127,10 +122,11 @@ describe("CHK-010: getRecentFoods — user-scoped meal_entries query", () => {
     };
     const foodOlder = { ...foodLatest, id: "food-older", name: "Apple" };
 
-    vi.mocked(db.select).mockReturnValue(
-      // DB returns in any order — service must re-sort by recency
-      makeChain([foodOlder, foodLatest]) as never
-    );
+    // 1st call: recent food IDs (groupBy), 2nd call: foods, 3rd call: servingSizes
+    vi.mocked(db.select)
+      .mockReturnValueOnce(makeChain([{ foodId: "food-latest" }, { foodId: "food-older" }]) as never)
+      .mockReturnValueOnce(makeChain([foodOlder, foodLatest]) as never)
+      .mockReturnValueOnce(makeChain([]) as never);
 
     const { getRecentFoods } = await import("@/server/services/food-service");
     const results = await getRecentFoods("user-123", 20);
@@ -145,7 +141,7 @@ describe("CHK-010: getRecentFoods — user-scoped meal_entries query", () => {
     const { db } = await import("@/server/db");
 
     let _capturedArgs: unknown;
-    vi.mocked(db.selectDistinct).mockImplementation((args) => {
+    vi.mocked(db.select).mockImplementation((args) => {
       _capturedArgs = args;
       return makeChain([]) as never;
     });
@@ -155,6 +151,6 @@ describe("CHK-010: getRecentFoods — user-scoped meal_entries query", () => {
     await getRecentFoods("specific-user-id", 20);
 
     // selectDistinct should have been called (meal_entries path executed)
-    expect(db.selectDistinct).toHaveBeenCalled();
+    expect(db.select).toHaveBeenCalled();
   });
 });
